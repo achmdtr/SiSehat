@@ -108,9 +108,21 @@
 
         label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 8px; }
         
-        input[type="text"], input[type="number"], select {
+        input[type="text"], input[type="number"] {
             width: 100%; padding: 12px 15px; border: 1px solid #cbd5e1; border-radius: 8px;
             font-size: 14px; color: #334155; outline: none; transition: border-color 0.2s;
+        }
+
+        select {
+            width: 100%; padding: 12px 15px; border: 1px solid #cbd5e1; border-radius: 8px;
+            font-size: 14px; color: #334155; outline: none; transition: border-color 0.2s;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23475569' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-size: 16px;
+            background-position: right 15px center;
         }
         input::placeholder { color: #94a3b8; }
         input:focus, select:focus { border-color: #0d47a1; box-shadow: 0 0 0 3px rgba(13, 71, 161, 0.1); }
