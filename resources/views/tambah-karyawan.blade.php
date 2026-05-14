@@ -111,6 +111,7 @@
 
         .radio-group { display: flex; gap: 20px; align-items: center; height: 45px; }
         .radio-option { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #475569; cursor: pointer; }
+        .radio-option input[type="radio"] { accent-color: #2563eb; }
 
         .btn-submit { 
             background-color: #2563eb; color: white; border: none; padding: 12px 30px; 
