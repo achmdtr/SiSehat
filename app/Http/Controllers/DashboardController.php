@@ -75,32 +75,73 @@ class DashboardController extends Controller
             $assessmentQuery = Assessment::where('id_umkm', $user->id_umkm);
         }
 
+        // Ambil asesmen terbaru untuk UMKM ini (jika bukan admin)
+        $latestAssessment = null;
+        if ($role !== 'admin') {
+            $latestAssessment = Assessment::where('id_umkm', $user->id_umkm)
+                ->where('status', 'Selesai')
+                ->latest()
+                ->first();
+        }
+
         // Statistik
         $stats = [
             'total_umkm' => Umkm::count(),
             'total_responden' => Assessment::count(),
-            'total_kesehatan' => round(((clone $assessmentQuery)->avg('total_score') ?? 0) * 20),
+            'total_kesehatan' => $latestAssessment 
+                ? round($latestAssessment->total_score * 20) 
+                : round(((clone $assessmentQuery)->avg('total_score') ?? 0) * 20),
         ];
 
         // Data Radar Chart (Faktor) - Dikalikan 20 agar jadi skala 100
-        $avgFactors = (clone $assessmentQuery)
-            ->select(
-                DB::raw('AVG(score_ov) * 20 as ov'),
-                DB::raw('AVG(score_ldi) * 20 as ldi'),
-                DB::raw('AVG(score_ins) * 20 as ins'),
-                DB::raw('AVG(score_ops) * 20 as ops'),
-                DB::raw('AVG(score_weq) * 20 as weq'),
-                DB::raw('AVG(score_ect) * 20 as ect')
-            )->first();
+        if ($latestAssessment) {
+            $data_factors = [
+                round($latestAssessment->score_ov * 20),
+                round($latestAssessment->score_ldi * 20),
+                round($latestAssessment->score_ins * 20),
+                round($latestAssessment->score_ops * 20),
+                round($latestAssessment->score_weq * 20),
+                round($latestAssessment->score_ect * 20),
+            ];
+            
+            // Untuk perhitungan insight nanti
+            $currentFactors = (object) [
+                'ov' => $latestAssessment->score_ov,
+                'ldi' => $latestAssessment->score_ldi,
+                'ins' => $latestAssessment->score_ins,
+                'ops' => $latestAssessment->score_ops,
+                'weq' => $latestAssessment->score_weq,
+                'ect' => $latestAssessment->score_ect,
+            ];
+        } else {
+            $avgFactors = (clone $assessmentQuery)
+                ->select(
+                    DB::raw('AVG(score_ov) * 20 as ov'),
+                    DB::raw('AVG(score_ldi) * 20 as ldi'),
+                    DB::raw('AVG(score_ins) * 20 as ins'),
+                    DB::raw('AVG(score_ops) * 20 as ops'),
+                    DB::raw('AVG(score_weq) * 20 as weq'),
+                    DB::raw('AVG(score_ect) * 20 as ect')
+                )->first();
 
-        $data_factors = [
-            round($avgFactors->ov ?? 0),
-            round($avgFactors->ldi ?? 0),
-            round($avgFactors->ins ?? 0),
-            round($avgFactors->ops ?? 0),
-            round($avgFactors->weq ?? 0),
-            round($avgFactors->ect ?? 0),
-        ];
+            $data_factors = [
+                round($avgFactors->ov ?? 0),
+                round($avgFactors->ldi ?? 0),
+                round($avgFactors->ins ?? 0),
+                round($avgFactors->ops ?? 0),
+                round($avgFactors->weq ?? 0),
+                round($avgFactors->ect ?? 0),
+            ];
+            
+            $currentFactors = (object) [
+                'ov' => ($avgFactors->ov ?? 0) / 20,
+                'ldi' => ($avgFactors->ldi ?? 0) / 20,
+                'ins' => ($avgFactors->ins ?? 0) / 20,
+                'ops' => ($avgFactors->ops ?? 0) / 20,
+                'weq' => ($avgFactors->weq ?? 0) / 20,
+                'ect' => ($avgFactors->ect ?? 0) / 20,
+            ];
+        }
 
         // Ranking UMKM (Selalu Global - Dikalikan 20)
         $top_umkm = Assessment::join('umkm', 'assessments.id_umkm', '=', 'umkm.id_umkm')
@@ -152,12 +193,12 @@ class DashboardController extends Controller
         // Ambil Insight Dinamis dari tabel Recommendations
         // 1. Identifikasi faktor terlemah (skala 1-5)
         $factorAverages = [
-            1 => $avgFactors->ov / 20,
-            2 => $avgFactors->ldi / 20,
-            3 => $avgFactors->ins / 20,
-            4 => $avgFactors->ops / 20,
-            5 => $avgFactors->weq / 20,
-            6 => $avgFactors->ect / 20,
+            1 => $currentFactors->ov,
+            2 => $currentFactors->ldi,
+            3 => $currentFactors->ins,
+            4 => $currentFactors->ops,
+            5 => $currentFactors->weq,
+            6 => $currentFactors->ect,
         ];
 
         // Temukan ID faktor dengan skor terendah
@@ -209,70 +250,62 @@ class DashboardController extends Controller
         $id_umkm = $user->id_umkm;
         $role = $user->role;
 
-        // Base Query untuk Assessments berdasarkan UMKM
-        $assessmentQuery = Assessment::where('id_umkm', $id_umkm);
+        // Ambil hasil dari asesmen TERBARU yang sudah selesai
+        $latest = Assessment::where('id_umkm', $id_umkm)
+            ->where('status', 'Selesai')
+            ->latest()
+            ->first();
 
-        // Ambil rata-rata per faktor
-        $avgFactors = (clone $assessmentQuery)
-            ->select(
-                DB::raw('AVG(score_ov) as ov'),
-                DB::raw('AVG(score_ldi) as ldi'),
-                DB::raw('AVG(score_ins) as ins'),
-                DB::raw('AVG(score_ops) as ops'),
-                DB::raw('AVG(score_weq) as weq'),
-                DB::raw('AVG(score_ect) as ect')
-            )->first();
-
-        // Ambil rata-rata total (skala 100)
-        $avgScore = ((clone $assessmentQuery)->avg('total_score') ?? 0) * 20;
+        $avgFactors = $latest;
+        $avgScore = ($latest->total_score ?? 0) * 20;
 
         // Metadata untuk looping di view
         $factors = [
             [
                 'id' => 1,
                 'title' => 'Nilai Organisasi',
-                'score' => round($avgFactors->ov ?? 0, 2),
-                'percentage' => round(($avgFactors->ov ?? 0) * 20, 1),
+                'score' => round($avgFactors->score_ov ?? 0, 2),
+                'percentage' => round(($avgFactors->score_ov ?? 0) * 20, 1),
                 'desc' => 'Nilai-nilai inti organisasi cukup terinternalisasi, namun perlu penyelarasan lebih lanjut untuk mendorong budaya kerja yang optimal.',
                 'icon' => '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>'
             ],
             [
                 'id' => 2,
                 'title' => 'Keterlibatan Pemimpin',
-                'score' => round($avgFactors->ldi ?? 0, 2),
-                'percentage' => round(($avgFactors->ldi ?? 0) * 20, 1),
+                'score' => round($avgFactors->score_ldi ?? 0, 2),
+                'percentage' => round(($avgFactors->score_ldi ?? 0) * 20, 1),
                 'desc' => 'Keterlibatan pimpinan ada namun belum konsisten. Komunikasi dan arahan strategis perlu ditingkatkan untuk memotivasi tim.',
                 'icon' => '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>'
             ],
             [
                 'id' => 3,
                 'title' => 'Sumber Daya Institusi',
-                'score' => round($avgFactors->ins ?? 0, 2),
-                'percentage' => round(($avgFactors->ins ?? 0) * 20, 1),
+                'score' => round($avgFactors->score_ins ?? 0, 2),
+                'percentage' => round(($avgFactors->score_ins ?? 0) * 20, 1),
                 'desc' => 'Kekurangan sumber daya krusial menghambat operasional. Diperlukan alokasi ulang aset dan investasi pada infrastruktur esensial.',
                 'icon' => '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>'
             ],
             [
                 'id' => 4,
                 'title' => 'Stabilitas Operasional',
-                'score' => round($avgFactors->ops ?? 0, 2),
-                'percentage' => round(($avgFactors->ops ?? 0) * 20, 1),
+                'score' => round($avgFactors->score_ops ?? 0, 2),
+                'percentage' => round(($avgFactors->score_ops ?? 0) * 20, 1),
                 'desc' => 'Proses operasional rentan terhadap gangguan. SOP perlu ditinjau ulang untuk meminimalisir kesalahan dan meningkatkan efisiensi.',
                 'icon' => '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>'
             ],
             [
                 'id' => 5,
                 'title' => 'Kualitas Tempat Kerja',
-                'score' => round($avgFactors->weq ?? 0, 2),
-                'percentage' => round(($avgFactors->weq ?? 0) * 20, 1),
+                'score' => round($avgFactors->score_weq ?? 0, 2),
+                'percentage' => round(($avgFactors->score_weq ?? 0) * 20, 1),
                 'desc' => 'Lingkungan kerja cukup memadai namun masih ada ruang perbaikan untuk kesejahteraan karyawan dan fasilitas pendukung.',
                 'icon' => '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>'
             ],
             [
                 'id' => 6,
                 'title' => 'Kinerja Ekonomi',
-                'score' => round($avgFactors->ect ?? 0, 2),
-                'percentage' => round(($avgFactors->ect ?? 0) * 20, 1),
+                'score' => round($avgFactors->score_ect ?? 0, 2),
+                'percentage' => round(($avgFactors->score_ect ?? 0) * 20, 1),
                 'desc' => 'Kinerja finansial berada di bawah target yang diharapkan. Diperlukan evaluasi strategi bisnis dan penekanan biaya secara signifikan.',
                 'icon' => '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>'
             ],
@@ -292,21 +325,22 @@ class DashboardController extends Controller
         $id_umkm = $user->id_umkm;
         $role = $user->role;
 
-        // Base Query berdasarkan UMKM
-        $assessmentQuery = Assessment::where('id_umkm', $id_umkm);
+        // Ambil hasil dari asesmen TERBARU yang sudah selesai
+        $latest = Assessment::where('id_umkm', $id_umkm)
+            ->where('status', 'Selesai')
+            ->latest()
+            ->first();
 
-        $avgScore = ((clone $assessmentQuery)->avg('total_score') ?? 0) * 20;
-        
-        // Ambil rata-rata per faktor (dikalikan 20)
-        $avgFactors = (clone $assessmentQuery)
-            ->select(
-                DB::raw('AVG(score_ov) * 20 as ov'),
-                DB::raw('AVG(score_ldi) * 20 as ldi'),
-                DB::raw('AVG(score_ins) * 20 as ins'),
-                DB::raw('AVG(score_ops) * 20 as ops'),
-                DB::raw('AVG(score_weq) * 20 as weq'),
-                DB::raw('AVG(score_ect) * 20 as ect')
-            )->first();
+        if (!$latest) {
+            return view('rekomendasi', ['data' => [
+                'skor_kesehatan' => 0,
+                'status' => 'BELUM ADA DATA',
+                'sorted_factors' => []
+            ]]);
+        }
+
+        $avgScore = ($latest->total_score ?? 0) * 20;
+        $avgFactors = $latest;
 
         // Tentukan status berdasarkan skor (skala 100)
         $status = 'KONDISI KURANG';
@@ -314,12 +348,12 @@ class DashboardController extends Controller
         elseif ($avgScore >= 50) $status = 'KONDISI CUKUP';
 
         $factorsArray = [
-            ['name' => 'Nilai Organisasi', 'score' => $avgFactors->ov, 'desc' => 'Mempertahankan budaya positif yang selaras dengan visi strategis.'],
-            ['name' => 'Keterlibatan Pemimpin', 'score' => $avgFactors->ldi, 'desc' => 'Keterlibatan pemimpin dalam mendukung operasional harian.'],
-            ['name' => 'Sumber Daya Institusi', 'score' => $avgFactors->ins, 'desc' => 'Ketersediaan sumber daya esensial untuk mendukung kerja.'],
-            ['name' => 'Stabilitas Operasional', 'score' => $avgFactors->ops, 'desc' => 'Kelancaran proses dan prosedur operasional.'],
-            ['name' => 'Kualitas Tempat Kerja', 'score' => $avgFactors->weq, 'desc' => 'Kondisi lingkungan kerja dan kesejahteraan karyawan.'],
-            ['name' => 'Kinerja Ekonomi', 'score' => $avgFactors->ect, 'desc' => 'Performa finansial dan efisiensi biaya.'],
+            ['name' => 'Nilai Organisasi', 'score' => $avgFactors->score_ov * 20, 'desc' => 'Mempertahankan budaya positif yang selaras dengan visi strategis.'],
+            ['name' => 'Keterlibatan Pemimpin', 'score' => $avgFactors->score_ldi * 20, 'desc' => 'Keterlibatan pemimpin dalam mendukung operasional harian.'],
+            ['name' => 'Sumber Daya Institusi', 'score' => $avgFactors->score_ins * 20, 'desc' => 'Ketersediaan sumber daya esensial untuk mendukung kerja.'],
+            ['name' => 'Stabilitas Operasional', 'score' => $avgFactors->score_ops * 20, 'desc' => 'Kelancaran proses dan prosedur operasional.'],
+            ['name' => 'Kualitas Tempat Kerja', 'score' => $avgFactors->score_weq * 20, 'desc' => 'Kondisi lingkungan kerja dan kesejahteraan karyawan.'],
+            ['name' => 'Kinerja Ekonomi', 'score' => $avgFactors->score_ect * 20, 'desc' => 'Performa finansial dan efisiensi biaya.'],
         ];
 
         usort($factorsArray, fn($a, $b) => $b['score'] <=> $a['score']);
@@ -432,7 +466,7 @@ class DashboardController extends Controller
         }
 
         try {
-            User::create([
+            $newEmployee = User::create([
                 'nama_user' => $validated['nama_user'],
                 'gender' => $validated['gender'],
                 'age' => $ageCategory, // Simpan kategori
@@ -440,6 +474,20 @@ class DashboardController extends Controller
                 'role' => 'employee',
                 'id_umkm' => $owner->id_umkm, // Otomatis ke UMKM milik owner
             ]);
+
+            // OTOMATIS BUKA KEMBALI ASESMEN JIKA ADA YANG SUDAH SELESAI
+            $latestAssessment = Assessment::where('id_umkm', $owner->id_umkm)
+                ->where('status', 'Selesai')
+                ->latest()
+                ->first();
+
+            if ($latestAssessment) {
+                $latestAssessment->update([
+                    'status' => 'Menunggu',
+                    'finished_at' => null,
+                    'employee_finished' => false // Set false agar chip status karyawan berubah lagi
+                ]);
+            }
 
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
@@ -483,28 +531,37 @@ class DashboardController extends Controller
         $role = $user->role;
         $id_umkm = $user->id_umkm;
 
-        // Cek apakah ada asesmen yang sedang berjalan
+        // Ambil asesmen paling baru (terlepas dari statusnya)
         $activeAssessment = Assessment::where('id_umkm', $id_umkm)
-            ->where('status', 'Menunggu')
+            ->latest()
             ->first();
 
-        // Jika user sudah menyelesaikan bagiannya di asesmen yang sedang berjalan
+        // Jika ada asesmen dan statusnya sudah 'Selesai' atau user sudah mengisi bagiannya
         if ($activeAssessment) {
-            if (($role === 'owner' && $activeAssessment->owner_finished) || 
-                ($role === 'employee' && $activeAssessment->employee_finished)) {
-                
-                if ($role === 'employee') {
-                    // Jangan redirect ke dashboard karena akan kena middleware loop.
-                    // Tampilkan saja view asesmen dengan state sudah selesai (kosongkan sections).
-                    return view('asesmen-organisasi', [
-                        'sections' => [],
-                        'alreadyFinished' => true,
-                        'ownerFinished' => $activeAssessment->owner_finished,
-                        'employeeFinished' => $activeAssessment->employee_finished,
-                    ]);
-                }
-                
-                return redirect()->route('dashboard')->with('info', 'Anda sudah mengisi bagian asesmen Anda. Menunggu pihak lain melengkapi.');
+            // Cek apakah user sudah punya data di tabel responses untuk asesmen ini
+            $hasSubmitted = DB::table('responses')
+                ->where('id_assessment', $activeAssessment->id_assessment)
+                ->where('id_user', $user->id_user)
+                ->exists();
+
+            if ($hasSubmitted || ($role === 'owner' && $activeAssessment->owner_finished) || $activeAssessment->status === 'Selesai') {
+                // Hitung progres karyawan untuk ditampilkan di view even if already finished
+                $totalEmployees = User::where('id_umkm', $id_umkm)->where('role', 'employee')->count();
+                $employeesFinishedCount = DB::table('responses')
+                    ->join('users', 'responses.id_user', '=', 'users.id_user')
+                    ->where('responses.id_assessment', $activeAssessment->id_assessment)
+                    ->where('users.role', 'employee')
+                    ->distinct('responses.id_user')
+                    ->count('responses.id_user');
+
+                return view('asesmen-organisasi', [
+                    'sections' => [],
+                    'alreadyFinished' => true,
+                    'ownerFinished' => $activeAssessment->owner_finished,
+                    'employeeFinished' => $activeAssessment->employee_finished,
+                    'totalEmployees' => $totalEmployees,
+                    'employeesFinishedCount' => $employeesFinishedCount,
+                ]);
             }
         }
 
@@ -549,9 +606,28 @@ class DashboardController extends Controller
         $sections = array_values($sections);
 
         $ownerFinished = $activeAssessment ? $activeAssessment->owner_finished : false;
+        
+        // Hitung progres karyawan
+        $totalEmployees = User::where('id_umkm', $id_umkm)->where('role', 'employee')->count();
+        $employeesFinishedCount = 0;
+        if ($activeAssessment) {
+            $employeesFinishedCount = DB::table('responses')
+                ->join('users', 'responses.id_user', '=', 'users.id_user')
+                ->where('responses.id_assessment', $activeAssessment->id_assessment)
+                ->where('users.role', 'employee')
+                ->distinct('responses.id_user')
+                ->count('responses.id_user');
+        }
+        
         $employeeFinished = $activeAssessment ? $activeAssessment->employee_finished : false;
 
-        return view('asesmen-organisasi', compact('sections', 'ownerFinished', 'employeeFinished'));
+        return view('asesmen-organisasi', compact(
+            'sections', 
+            'ownerFinished', 
+            'employeeFinished', 
+            'totalEmployees', 
+            'employeesFinishedCount'
+        ));
     }
 
     public function detailFaktor($id)
@@ -592,26 +668,30 @@ class DashboardController extends Controller
 
         // Ambil pertanyaan untuk faktor ini untuk sub-indicators
         $questions = DB::table('questions')->where('id_factor', $id)->get();
-        $answers = json_decode($latestAssessment->answers, true) ?? [];
+        // Ambil rata-rata jawaban untuk setiap pertanyaan dari tabel responses
+        $responses = DB::table('responses')
+            ->where('id_assessment', $latestAssessment->id_assessment)
+            ->get()
+            ->groupBy('id_question');
+
         $translations = $this->questionTextTranslations();
 
         $subIndicators = [];
         $chartData = [];
-        $scoreMap3 = ['Tidak' => 1, 'Sedang Proses' => 2, 'Ya' => 3, 'Modal Sendiri' => 1, 'Keluarga' => 2, 'Bank / Kredit' => 3];
-        $scoreMap5 = ['Sangat Tidak Setuju' => 1, 'Tidak Setuju' => 2, 'Ragu-ragu' => 3, 'Setuju' => 4, 'Sangat Setuju' => 5];
 
         foreach ($questions as $q) {
             $qId = $q->id_question;
             $qIdNum = (int) str_replace('OH', '', $qId);
-            $val = $answers[$qId] ?? null;
+            $userResponses = $responses->get($qId);
             
             $s = 1.0; // Default
-            if ($val) {
+            if ($userResponses && $userResponses->isNotEmpty()) {
+                $avgRaw = $userResponses->avg('nilai');
                 if ($qIdNum <= 6) {
-                    $raw = $scoreMap3[$val] ?? 1;
-                    $s = (($raw - 1) / 2.0) * 4 + 1;
+                    // Konversi skala 1-3 ke 1-5
+                    $s = (($avgRaw - 1) / 2.0) * 4 + 1;
                 } else {
-                    $s = (float) ($scoreMap5[$val] ?? 1);
+                    $s = $avgRaw;
                 }
             }
             
@@ -674,12 +754,38 @@ class DashboardController extends Controller
                 $assessment->id_employee = $user->id_user;
             }
 
-            // Hitung skor sementara/akhir dari semua jawaban yang ada saat ini
-            $allAnswers = json_decode($assessment->answers, true);
-            $this->calculateAndSaveScores($assessment, $allAnswers);
+            $assessment->save();
 
-            // Cek apakah sudah lengkap untuk mengubah status
-            if ($assessment->owner_finished && $assessment->employee_finished) {
+            // SIMPAN DATA KE TABEL RESPONSES (Individual)
+            $scoreMap3 = [
+                'Tidak' => 1, 'Sedang Proses' => 2, 'Ya' => 3,
+                'Modal Sendiri' => 1, 'Keluarga' => 2, 'Bank / Kredit' => 3
+            ];
+            $scoreMap5 = [
+                'Sangat Tidak Setuju' => 1, 'Tidak Setuju' => 2, 'Ragu-ragu' => 3, 'Setuju' => 4, 'Sangat Setuju' => 5
+            ];
+
+            foreach ($newAnswers as $qId => $val) {
+                $qIdNum = (int) str_replace('OH', '', $qId);
+                $nilai = ($qIdNum <= 6) ? ($scoreMap3[$val] ?? 1) : ($scoreMap5[$val] ?? 1);
+
+                DB::table('responses')->updateOrInsert(
+                    ['id_assessment' => $assessment->id_assessment, 'id_user' => $user->id_user, 'id_question' => $qId],
+                    ['nilai' => $nilai, 'created_at' => now()]
+                );
+            }
+
+            // Hitung skor akhir dari seluruh partisipan (Rata-rata)
+            $this->calculateAndSaveScores($assessment);
+
+            // Cek apakah seluruh anggota UMKM (Owner + Karyawan) sudah mengisi
+            $totalAnggota = User::where('id_umkm', $id_umkm)->count();
+            $totalResponden = DB::table('responses')
+                ->where('id_assessment', $assessment->id_assessment)
+                ->distinct('id_user')
+                ->count('id_user');
+
+            if ($totalResponden >= $totalAnggota) {
                 $assessment->status = 'Selesai';
                 $assessment->finished_at = now();
                 $assessment->save();
@@ -695,40 +801,44 @@ class DashboardController extends Controller
     }
 
     /**
-     * Helper untuk menghitung skor dari gabungan jawaban Owner & Employee
+     * Helper untuk menghitung skor rata-rata dari semua partisipan di tabel responses
      */
-    private function calculateAndSaveScores($assessment, $answers)
+    private function calculateAndSaveScores($assessment)
     {
-        $scoreMap3 = [
-            'Tidak' => 1, 'Sedang Proses' => 2, 'Ya' => 3,
-            'Modal Sendiri' => 1, 'Keluarga' => 2, 'Bank / Kredit' => 3
-        ];
-        
-        $scoreMap5 = [
-            'Sangat Tidak Setuju' => 1,
-            'Tidak Setuju' => 2,
-            'Ragu-ragu' => 3,
-            'Setuju' => 4,
-            'Sangat Setuju' => 5
-        ];
-        
+        // Ambil semua response untuk sesi ini
+        $responses = DB::table('responses')
+            ->where('id_assessment', $assessment->id_assessment)
+            ->get();
+
+        if ($responses->isEmpty()) return;
+
+        // Kelompokkan nilai per pertanyaan
+        $questionValues = [];
+        foreach ($responses as $r) {
+            $questionValues[$r->id_question][] = $r->nilai;
+        }
+
+        // Hitung rata-rata nilai per pertanyaan, lalu konversi ke skala 1-5
+        $averagedAnswers = [];
+        foreach ($questionValues as $qId => $values) {
+            $avgRaw = array_sum($values) / count($values);
+            $qIdNum = (int) str_replace('OH', '', $qId);
+
+            if ($qIdNum <= 6) {
+                // Konversi skala 1-3 ke 1-5: ((raw-1)/2)*4 + 1
+                $averagedAnswers[$qId] = (($avgRaw - 1) / 2.0) * 4 + 1;
+            } else {
+                $averagedAnswers[$qId] = $avgRaw;
+            }
+        }
+
+        // Kelompokkan ke dalam faktor
         $allQuestions = DB::table('questions')->get();
         $factorScores = [1 => [], 2 => [], 3 => [], 4 => [], 5 => [], 6 => []];
-        
+
         foreach ($allQuestions as $q) {
-            $fId = $q->id_factor;
-            $qId = $q->id_question;
-            $qIdNum = (int) str_replace('OH', '', $qId);
-            
-            if (isset($answers[$qId])) {
-                $val = $answers[$qId];
-                if ($qIdNum <= 6) {
-                    $rawScore = $scoreMap3[$val] ?? 1;
-                    $score = (($rawScore - 1) / 2.0) * 4 + 1;
-                } else {
-                    $score = $scoreMap5[$val] ?? 1;
-                }
-                $factorScores[$fId][] = $score;
+            if (isset($averagedAnswers[$q->id_question])) {
+                $factorScores[$q->id_factor][] = $averagedAnswers[$q->id_question];
             }
         }
 
@@ -745,7 +855,7 @@ class DashboardController extends Controller
 
         $assessment->total_score = ($assessment->score_ov + $assessment->score_ldi + $assessment->score_ins + $assessment->score_ops + $assessment->score_weq + $assessment->score_ect) / 6;
         
-        // Penentuan Kategori berdasarkan Skor (1-5)
+        // Penentuan Kategori
         if ($assessment->total_score <= 2.33) {
             $assessment->kategori_kuartil = 'Kurang';
         } elseif ($assessment->total_score <= 3.66) {
@@ -776,17 +886,31 @@ class DashboardController extends Controller
             abort(404, 'Belum ada data asesmen.');
         }
 
-        $answers = json_decode($assessment->answers, true) ?? [];
+        // Ambil rata-rata jawaban per pertanyaan
+        $responses = DB::table('responses')
+            ->where('id_assessment', $assessment->id_assessment)
+            ->get()
+            ->groupBy('id_question');
+
         $translations = $this->questionTextTranslations();
 
         $rows = [];
         $questions = DB::table('questions')->orderBy('id_factor')->orderBy('id_question')->get();
         foreach ($questions as $q) {
             $qid = $q->id_question;
+            $userResponses = $responses->get($qid);
+            
+            $displayText = '—';
+            if ($userResponses && $userResponses->isNotEmpty()) {
+                $avg = round($userResponses->avg('nilai'), 2);
+                $count = $userResponses->count();
+                $displayText = "Skor Rata-rata: $avg (dari $count responden)";
+            }
+
             $rows[] = [
                 'id' => $qid,
                 'pertanyaan' => $translations[$qid] ?? $q->teks_pertanyaan,
-                'jawaban' => $answers[$qid] ?? '—',
+                'jawaban' => $displayText,
             ];
         }
 

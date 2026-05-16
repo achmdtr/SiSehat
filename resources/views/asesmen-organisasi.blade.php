@@ -372,10 +372,12 @@
                 <div class="status-indicator"></div>
                 <span>Pemilik: {{ $ownerFinished ? 'Sudah Mengisi' : 'Belum Mengisi' }}</span>
             </div>
-            <div class="role-status-chip {{ $employeeFinished ? 'completed' : '' }}">
+            @if($totalEmployees > 0)
+            <div class="role-status-chip {{ $employeesFinishedCount >= $totalEmployees ? 'completed' : '' }}">
                 <div class="status-indicator"></div>
-                <span>Karyawan: {{ $employeeFinished ? 'Sudah Mengisi' : 'Belum Mengisi' }}</span>
+                <span>Karyawan: {{ $employeesFinishedCount }}/{{ $totalEmployees }} Selesai</span>
             </div>
+            @endif
         </div>
 
         <div class="progress-card">
@@ -468,7 +470,7 @@
                 </div>
                 <div class="status-item">
                     <h6>WAKTU PENGERJAAN</h6>
-                    <p>~15 Menit</p>
+                    <p id="realDuration">Menghitung...</p>
                 </div>
             </div>
 
@@ -496,7 +498,7 @@
                 document.getElementById('successModal').classList.add('active');
             @endif
 
-            // Data Pertanyaan (Dinamis dari Database)
+            const startTime = new Date(); // Catat waktu mulai
             const sections = @json($sections);
             const totalQuestions = sections.reduce((acc, s) => acc + s.questions.length, 0);
 
@@ -629,6 +631,20 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
+                            // Hitung waktu pengerjaan
+                            const endTime = new Date();
+                            const diff = Math.abs(endTime - startTime);
+                            const minutes = Math.floor(diff / 1000 / 60);
+                            const seconds = Math.floor((diff / 1000) % 60);
+                            
+                            let durationText = "";
+                            if (minutes > 0) {
+                                durationText = `${minutes} Menit ${seconds} Detik`;
+                            } else {
+                                durationText = `${seconds} Detik`;
+                            }
+                            
+                            document.getElementById('realDuration').textContent = durationText;
                             modal.classList.add('active');
                         } else {
                             alert('Terjadi kesalahan saat menyimpan data.');

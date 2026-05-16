@@ -35,13 +35,26 @@ class RegisteredUserController extends Controller
 
         $request->validate([
             'nama_user' => ['required', 'string', 'max:100', 'unique:'.User::class.',nama_user'],
+            'age' => ['required', 'numeric'],
+            'gender' => ['required', 'string'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ], [
             'password.confirmed' => 'Konfirmasi kata sandi tidak cocok dengan kata sandi di atas.',
         ]);
 
+        // Kategori Umur
+        $ageInput = $request->age;
+        $ageCategory = 3; // Default > 40
+        if ($ageInput < 30) {
+            $ageCategory = 1;
+        } elseif ($ageInput <= 40) {
+            $ageCategory = 2;
+        }
+
         $user = User::create([
             'nama_user' => $request->nama_user,
+            'age' => $ageCategory,
+            'gender' => $request->gender,
             'password' => Hash::make($request->password),
             'role' => 'owner', // Default role for registration
         ]);
