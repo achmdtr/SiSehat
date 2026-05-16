@@ -317,7 +317,7 @@
         <div class="main-grid">
             
             <div class="form-card">
-                <form action="{{ route('dashboard.simpan-umkm') }}" method="POST">
+                <form id="umkmForm" action="{{ route('dashboard.simpan-umkm') }}" method="POST">
                     @csrf
                     
                     <div class="form-group">
@@ -403,12 +403,30 @@
             <button class="btn-modal-ok" id="btnOkModal">Kembali ke Beranda</button>
         </div>
     </div>
+
+    <!-- Modal Limit UMKM -->
+    <div class="modal-overlay" id="limitModal">
+        <div class="modal-box">
+            <div class="modal-icon" style="background-color: #fee2e2; color: #dc3545;">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+            </div>
+            <h3 class="modal-title">Batas Tercapai</h3>
+            <p class="modal-desc">Anda sudah memiliki UMKM terdaftar. Saat ini sistem hanya mengizinkan satu UMKM per akun pemilik.</p>
+            <button class="btn-modal-ok" id="btnLimitOk" style="background-color: #dc3545;">Lihat Manajemen UMKM</button>
+        </div>
+    </div>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Ambil elemen form dan modal
-            const form = document.querySelector('form');
+            // Ambil elemen form dan modal menggunakan ID yang spesifik
+            const form = document.getElementById('umkmForm');
             const modal = document.getElementById('successModal');
             const btnOk = document.getElementById('btnOkModal');
+            const limitModal = document.getElementById('limitModal');
+            const btnLimitOk = document.getElementById('btnLimitOk');
 
             // Logika saat form disubmit (klik tombol Simpan Data)
             form.addEventListener('submit', function(e) {
@@ -431,7 +449,12 @@
                     if (result.success) {
                         modal.classList.add('active');
                     } else {
-                        alert('Gagal menyimpan data: ' + (result.message || 'Terjadi kesalahan'));
+                        // Jika pesan error menunjukkan batas tercapai, tampilkan limitModal
+                        if (result.message && result.message.includes('sudah memiliki satu UMKM')) {
+                            limitModal.classList.add('active');
+                        } else {
+                            alert('Gagal menyimpan data: ' + (result.message || 'Terjadi kesalahan'));
+                        }
                     }
                 })
                 .catch(error => {
@@ -447,6 +470,11 @@
                 
                 // Arahkan user kembali ke halaman dashboard
                 window.location.href = "{{ route('dashboard') }}"; 
+            });
+
+            // Logika Limit UMKM
+            btnLimitOk.addEventListener('click', function() {
+                window.location.href = "{{ route('dashboard.manajemen-umkm') }}";
             });
         });
     </script>
