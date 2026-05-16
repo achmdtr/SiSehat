@@ -245,6 +245,41 @@
             box-sizing: border-box;
         }
 
+        /* Role Status Bar */
+        .role-status-bar {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 5px;
+        }
+        .role-status-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            transition: 0.3s;
+        }
+        .role-status-chip.completed {
+            background: #ecfdf5;
+            border-color: #10b981;
+            color: #047857;
+        }
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #cbd5e1;
+        }
+        .completed .status-indicator {
+            background: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+        }
+
     </style>
 </head>
 <body>
@@ -329,6 +364,17 @@
             <div class="estimasi-waktu">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                 Estimasi Waktu: 15 Menit
+            </div>
+        </div>
+
+        <div class="role-status-bar">
+            <div class="role-status-chip {{ $ownerFinished ? 'completed' : '' }}">
+                <div class="status-indicator"></div>
+                <span>Pemilik: {{ $ownerFinished ? 'Sudah Mengisi' : 'Belum Mengisi' }}</span>
+            </div>
+            <div class="role-status-chip {{ $employeeFinished ? 'completed' : '' }}">
+                <div class="status-indicator"></div>
+                <span>Karyawan: {{ $employeeFinished ? 'Sudah Mengisi' : 'Belum Mengisi' }}</span>
             </div>
         </div>
 

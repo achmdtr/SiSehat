@@ -498,7 +498,9 @@ class DashboardController extends Controller
                     // Tampilkan saja view asesmen dengan state sudah selesai (kosongkan sections).
                     return view('asesmen-organisasi', [
                         'sections' => [],
-                        'alreadyFinished' => true
+                        'alreadyFinished' => true,
+                        'ownerFinished' => $activeAssessment->owner_finished,
+                        'employeeFinished' => $activeAssessment->employee_finished,
                     ]);
                 }
                 
@@ -546,7 +548,10 @@ class DashboardController extends Controller
         // Re-index to numeric array for JS
         $sections = array_values($sections);
 
-        return view('asesmen-organisasi', compact('sections'));
+        $ownerFinished = $activeAssessment ? $activeAssessment->owner_finished : false;
+        $employeeFinished = $activeAssessment ? $activeAssessment->employee_finished : false;
+
+        return view('asesmen-organisasi', compact('sections', 'ownerFinished', 'employeeFinished'));
     }
 
     public function detailFaktor($id)
