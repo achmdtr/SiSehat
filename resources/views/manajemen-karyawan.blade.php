@@ -68,9 +68,29 @@
         .profile-card:hover { background-color: #e0e7ff; }
         .avatar-sidebar { width: 45px; height: 45px; border-radius: 50%; background-color: #0a4ebd; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; overflow: hidden; }
         .avatar-sidebar img { width: 100%; height: 100%; object-fit: cover; }
-        .profile-info { flex-grow: 1; text-align: right; }
-        .profile-info h4 { font-size: 15px; color: #1e293b; font-weight: 800; line-height: 1.2; }
+        .profile-info { flex-grow: 1; text-align: left; }
+        .profile-info h4 { font-size: 14px; color: #1e293b; font-weight: 800; line-height: 1.2; }
         .profile-info p { font-size: 11px; color: #64748b; font-weight: 600; }
+        
+        .logout-btn-small {
+            background: none;
+            border: none;
+            color: #dc3545;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+        .logout-btn-small:hover {
+            background-color: #fee2e2;
+        }
+        .logout-btn-small svg {
+            width: 20px;
+            height: 20px;
+        }
 
         /* ================= MAIN CONTENT ================= */
         .content-area { flex-grow: 1; padding: 40px; overflow-y: auto; scroll-behavior: smooth; }
@@ -174,6 +194,16 @@
                 <h4>{{ auth()->user()->name ?? 'Riski' }}</h4>
                 <x-sidebar-role-subtitle />
             </div>
+            <button class="logout-btn-small" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" title="Keluar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+            </button>
+            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                @csrf
+            </form>
         </div>
     </div>
 

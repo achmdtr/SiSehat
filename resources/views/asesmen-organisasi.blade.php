@@ -53,26 +53,29 @@
         
         .nav-item:hover:not(.active) { background-color: #f8fafc; color: #1e293b; }
         .nav-item:hover .nav-icon { opacity: 0.9; filter: grayscale(0%); }
-        .logout-btn:hover { color: #dc2626 !important; background-color: #fef2f2 !important; }
-        .logout-btn:hover .nav-icon { stroke: #dc2626 !important; opacity: 1 !important; filter: none !important; }
-
-        .profile-card { 
-            margin-top: auto; 
-            padding: 12px 15px; 
-            background-color: #eef2ff; 
-            border-radius: 12px; 
-            display: flex; 
-            align-items: center; 
-            gap: 12px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        .profile-card:hover { background-color: #e0e7ff; }
-        .avatar-sidebar { width: 45px; height: 45px; border-radius: 50%; background-color: #0a4ebd; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; overflow: hidden; }
-        .avatar-sidebar img { width: 100%; height: 100%; object-fit: cover; }
-        .profile-info { flex-grow: 1; text-align: right; }
-        .profile-info h4 { font-size: 15px; color: #1e293b; font-weight: 800; line-height: 1.2; }
+        .profile-info { flex-grow: 1; text-align: left; }
+        .profile-info h4 { font-size: 14px; color: #1e293b; font-weight: 800; line-height: 1.2; }
         .profile-info p { font-size: 11px; color: #64748b; font-weight: 600; }
+        
+        .logout-btn-small {
+            background: none;
+            border: none;
+            color: #dc3545;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+        .logout-btn-small:hover {
+            background-color: #fee2e2;
+        }
+        .logout-btn-small svg {
+            width: 20px;
+            height: 20px;
+        }
 
         .flash-info-banner {
             background: #eff6ff;
@@ -299,15 +302,18 @@
                 <h4>{{ auth()->user()->name ?? 'Riski' }}</h4>
                 <x-sidebar-role-subtitle />
             </div>
+            <button class="logout-btn-small" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" title="Keluar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+            </button>
+            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                @csrf
+            </form>
         </div>
 
-        <form method="POST" action="{{ route('logout') }}" style="margin-top: 15px;">
-            @csrf
-            <button type="submit" class="nav-item logout-btn" style="width: 100%; border: none; background: none; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 12px 15px; border-radius: 10px; color: #718096; font-weight: 500; transition: 0.3s;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                <span style="font-size: 14px;">Keluar</span>
-            </button>
-        </form>
     </div>
 
     <div class="content-area">
