@@ -36,7 +36,7 @@ class RegisteredUserController extends Controller
         $request->validate([
             'nama_user' => ['required', 'string', 'max:100', 'unique:'.User::class.',nama_user'],
             'age' => ['required', 'numeric'],
-            'gender' => ['required', 'string'],
+            'gender' => ['required', 'in:1,2'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ], [
             'password.confirmed' => 'Konfirmasi kata sandi tidak cocok dengan kata sandi di atas.',

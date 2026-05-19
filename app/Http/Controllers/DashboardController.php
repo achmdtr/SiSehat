@@ -791,7 +791,22 @@ class DashboardController extends Controller
                 $assessment->save();
             }
 
-            return response()->json(['success' => true]);
+            // Hitung progres karyawan untuk response
+            $totalEmployees = User::where('id_umkm', $id_umkm)->where('role', 'employee')->count();
+            $employeesFinishedCount = DB::table('responses')
+                ->join('users', 'responses.id_user', '=', 'users.id_user')
+                ->where('responses.id_assessment', $assessment->id_assessment)
+                ->where('users.role', 'employee')
+                ->distinct('responses.id_user')
+                ->count('responses.id_user');
+
+            return response()->json([
+                'success' => true,
+                'owner_finished' => (bool) $assessment->owner_finished,
+                'total_employees' => $totalEmployees,
+                'employees_finished_count' => $employeesFinishedCount,
+                'assessment_status' => $assessment->status,
+            ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,

@@ -384,14 +384,14 @@
         </div>
 
         <div class="role-status-bar">
-            <div class="role-status-chip {{ $ownerFinished ? 'completed' : '' }}">
+            <div id="chipOwner" class="role-status-chip {{ $ownerFinished ? 'completed' : '' }}">
                 <div class="status-indicator"></div>
-                <span>Pemilik: {{ $ownerFinished ? 'Sudah Mengisi' : 'Belum Mengisi' }}</span>
+                <span id="textOwner">Pemilik: {{ $ownerFinished ? 'Sudah Mengisi' : 'Belum Mengisi' }}</span>
             </div>
             @if($totalEmployees > 0)
-            <div class="role-status-chip {{ $employeesFinishedCount >= $totalEmployees ? 'completed' : '' }}">
+            <div id="chipEmployees" class="role-status-chip {{ $employeesFinishedCount >= $totalEmployees ? 'completed' : '' }}">
                 <div class="status-indicator"></div>
-                <span>Karyawan: {{ $employeesFinishedCount }}/{{ $totalEmployees }} Selesai</span>
+                <span id="textEmployees">Karyawan: {{ $employeesFinishedCount }}/{{ $totalEmployees }} Selesai</span>
             </div>
             @endif
         </div>
@@ -492,7 +492,7 @@
 
             <div class="modal-actions">
                 @if(auth()->user()->role === 'employee')
-                <button type="button" class="btn-modal-primary" onclick="document.getElementById('successModal').classList.remove('active');">Selesai</button>
+                <button type="button" class="btn-modal-primary" id="btnModalSelesaiKaryawan">Selesai</button>
                 <a href="{{ route('dashboard.asesmen-ringkasan-pdf') }}" class="btn-modal-outline" target="_blank" rel="noopener noreferrer">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                     Unduh PDF
@@ -661,6 +661,32 @@
                             }
                             
                             document.getElementById('realDuration').textContent = durationText;
+
+                            // Update status pemilik secara dinamis
+                            const chipOwner = document.getElementById('chipOwner');
+                            const textOwner = document.getElementById('textOwner');
+                            if (chipOwner && textOwner) {
+                                if (data.owner_finished) {
+                                    chipOwner.classList.add('completed');
+                                    textOwner.textContent = 'Pemilik: Sudah Mengisi';
+                                } else {
+                                    chipOwner.classList.remove('completed');
+                                    textOwner.textContent = 'Pemilik: Belum Mengisi';
+                                }
+                            }
+
+                            // Update status karyawan secara dinamis
+                            const chipEmployees = document.getElementById('chipEmployees');
+                            const textEmployees = document.getElementById('textEmployees');
+                            if (chipEmployees && textEmployees) {
+                                textEmployees.textContent = `Karyawan: ${data.employees_finished_count}/${data.total_employees} Selesai`;
+                                if (data.employees_finished_count >= data.total_employees) {
+                                    chipEmployees.classList.add('completed');
+                                } else {
+                                    chipEmployees.classList.remove('completed');
+                                }
+                            }
+
                             modal.classList.add('active');
                         } else {
                             alert('Terjadi kesalahan saat menyimpan data.');
@@ -682,10 +708,16 @@
                 }
             });
 
-            // Initial Render
-            if (sections.length > 0) {
-                renderStep();
-            } else {
+            // Selesai Button in Modal (untuk peran karyawan)
+            const btnModalSelesaiKaryawan = document.getElementById('btnModalSelesaiKaryawan');
+            if (btnModalSelesaiKaryawan) {
+                btnModalSelesaiKaryawan.addEventListener('click', function() {
+                    modal.classList.remove('active');
+                    showAsesmenSelesaiState();
+                });
+            }
+
+            function showAsesmenSelesaiState() {
                 // Sembunyikan elemen progres jika tidak ada pertanyaan
                 const progressCard = document.querySelector('.progress-card');
                 if (progressCard) progressCard.style.display = 'none';
@@ -702,6 +734,13 @@
                         </div>
                     `;
                 }
+            }
+
+            // Initial Render
+            if (sections.length > 0) {
+                renderStep();
+            } else {
+                showAsesmenSelesaiState();
             }
         });
     </script>
