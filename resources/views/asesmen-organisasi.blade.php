@@ -53,6 +53,22 @@
         
         .nav-item:hover:not(.active) { background-color: #f8fafc; color: #1e293b; }
         .nav-item:hover .nav-icon { opacity: 0.9; filter: grayscale(0%); }
+
+        .profile-card { 
+            margin-top: auto; 
+            padding: 12px 15px; 
+            background-color: #eef2ff; 
+            border-radius: 12px; 
+            display: flex; 
+            align-items: center; 
+            gap: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .profile-card:hover { background-color: #e0e7ff; }
+        .avatar-sidebar { width: 45px; height: 45px; border-radius: 50%; background-color: #0a4ebd; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; overflow: hidden; }
+        .avatar-sidebar img { width: 100%; height: 100%; object-fit: cover; }
+
         .profile-info { flex-grow: 1; text-align: left; }
         .profile-info h4 { font-size: 14px; color: #1e293b; font-weight: 800; line-height: 1.2; }
         .profile-info p { font-size: 11px; color: #64748b; font-weight: 600; }
