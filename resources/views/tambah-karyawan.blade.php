@@ -114,7 +114,7 @@
         .form-row { display: flex; gap: 20px; margin-bottom: 20px; }
         .form-row .form-group { flex: 1; margin-bottom: 0; }
         
-        label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 8px; }
+        label, .label-title { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 8px; }
         input[type="text"], input[type="password"], input[type="number"] {
             width: 100%; padding: 12px 15px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none;
         }
@@ -300,21 +300,21 @@
             <div class="form-card">
                 <form id="employeeForm" novalidate>
                     <div class="form-group">
-                        <label>Nama Lengkap</label>
-                        <input type="text" name="nama_user" placeholder="Masukkan nama lengkap sesuai identitas" required>
+                        <label for="nama_user">Nama Lengkap</label>
+                        <input type="text" id="nama_user" name="nama_user" placeholder="Masukkan nama lengkap sesuai identitas" required>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label>Jenis Kelamin</label>
+                            <span class="label-title">Jenis Kelamin</span>
                             <div class="radio-group">
                                 <label class="radio-option"><input type="radio" name="gender" value="2" required> Laki-laki</label>
                                 <label class="radio-option"><input type="radio" name="gender" value="1"> Perempuan</label>
                             </div>
                         </div>
                         <div class="form-group">
-                            <label>Usia</label>
-                            <input type="number" name="age" placeholder="Contoh: 28" required>
+                            <label for="age">Usia</label>
+                            <input type="number" id="age" name="age" placeholder="Contoh: 28" required>
                         </div>
                     </div>
 
