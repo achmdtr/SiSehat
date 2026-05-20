@@ -9,6 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="{{ asset('css/responsive-layout.css') }}" rel="stylesheet">
 
     <style>
         /* Reset & Base */
@@ -581,5 +582,6 @@
             });
         });
     </script>
+    <script src="{{ asset('js/responsive-sidebar.js') }}"></script>
 </body>
 </html>

@@ -343,11 +343,11 @@
                     <label>Jenis Kelamin</label>
                     <div class="radio-container">
                         <label class="radio-box">
-                            <input type="radio" name="gender" value="Laki-laki" {{ old('gender') == 'Laki-laki' ? 'checked' : '' }} required>
+                            <input type="radio" name="gender" value="2" {{ old('gender') == '2' ? 'checked' : '' }} required>
                             Laki-laki
                         </label>
                         <label class="radio-box">
-                            <input type="radio" name="gender" value="Perempuan" {{ old('gender') == 'Perempuan' ? 'checked' : '' }} required>
+                            <input type="radio" name="gender" value="1" {{ old('gender') == '1' ? 'checked' : '' }} required>
                             Perempuan
                         </label>
                     </div>

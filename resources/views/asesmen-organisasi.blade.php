@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SiSehat - Asesmen Organisasi</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="{{ asset('css/responsive-layout.css') }}" rel="stylesheet">
     
     <style>
         /* Reset & Base */
@@ -53,6 +54,22 @@
         
         .nav-item:hover:not(.active) { background-color: #f8fafc; color: #1e293b; }
         .nav-item:hover .nav-icon { opacity: 0.9; filter: grayscale(0%); }
+
+        .profile-card { 
+            margin-top: auto; 
+            padding: 12px 15px; 
+            background-color: #eef2ff; 
+            border-radius: 12px; 
+            display: flex; 
+            align-items: center; 
+            gap: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .profile-card:hover { background-color: #e0e7ff; }
+        .avatar-sidebar { width: 45px; height: 45px; border-radius: 50%; background-color: #0a4ebd; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; overflow: hidden; }
+        .avatar-sidebar img { width: 100%; height: 100%; object-fit: cover; }
+
         .profile-info { flex-grow: 1; text-align: left; }
         .profile-info h4 { font-size: 14px; color: #1e293b; font-weight: 800; line-height: 1.2; }
         .profile-info p { font-size: 11px; color: #64748b; font-weight: 600; }
@@ -245,6 +262,41 @@
             box-sizing: border-box;
         }
 
+        /* Role Status Bar */
+        .role-status-bar {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 5px;
+        }
+        .role-status-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            transition: 0.3s;
+        }
+        .role-status-chip.completed {
+            background: #ecfdf5;
+            border-color: #10b981;
+            color: #047857;
+        }
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #cbd5e1;
+        }
+        .completed .status-indicator {
+            background: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+        }
+
     </style>
 </head>
 <body>
@@ -330,6 +382,19 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                 Estimasi Waktu: 15 Menit
             </div>
+        </div>
+
+        <div class="role-status-bar">
+            <div id="chipOwner" class="role-status-chip {{ $ownerFinished ? 'completed' : '' }}">
+                <div class="status-indicator"></div>
+                <span id="textOwner">Pemilik: {{ $ownerFinished ? 'Sudah Mengisi' : 'Belum Mengisi' }}</span>
+            </div>
+            @if($totalEmployees > 0)
+            <div id="chipEmployees" class="role-status-chip {{ $employeesFinishedCount >= $totalEmployees ? 'completed' : '' }}">
+                <div class="status-indicator"></div>
+                <span id="textEmployees">Karyawan: {{ $employeesFinishedCount }}/{{ $totalEmployees }} Selesai</span>
+            </div>
+            @endif
         </div>
 
         <div class="progress-card">
@@ -422,13 +487,13 @@
                 </div>
                 <div class="status-item">
                     <h6>WAKTU PENGERJAAN</h6>
-                    <p>~15 Menit</p>
+                    <p id="realDuration">Menghitung...</p>
                 </div>
             </div>
 
             <div class="modal-actions">
                 @if(auth()->user()->role === 'employee')
-                <button type="button" class="btn-modal-primary" onclick="document.getElementById('successModal').classList.remove('active');">Selesai</button>
+                <button type="button" class="btn-modal-primary" id="btnModalSelesaiKaryawan">Selesai</button>
                 <a href="{{ route('dashboard.asesmen-ringkasan-pdf') }}" class="btn-modal-outline" target="_blank" rel="noopener noreferrer">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                     Unduh PDF
@@ -450,7 +515,7 @@
                 document.getElementById('successModal').classList.add('active');
             @endif
 
-            // Data Pertanyaan (Dinamis dari Database)
+            const startTime = new Date(); // Catat waktu mulai
             const sections = @json($sections);
             const totalQuestions = sections.reduce((acc, s) => acc + s.questions.length, 0);
 
@@ -583,6 +648,46 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
+                            // Hitung waktu pengerjaan
+                            const endTime = new Date();
+                            const diff = Math.abs(endTime - startTime);
+                            const minutes = Math.floor(diff / 1000 / 60);
+                            const seconds = Math.floor((diff / 1000) % 60);
+                            
+                            let durationText = "";
+                            if (minutes > 0) {
+                                durationText = `${minutes} Menit ${seconds} Detik`;
+                            } else {
+                                durationText = `${seconds} Detik`;
+                            }
+                            
+                            document.getElementById('realDuration').textContent = durationText;
+
+                            // Update status pemilik secara dinamis
+                            const chipOwner = document.getElementById('chipOwner');
+                            const textOwner = document.getElementById('textOwner');
+                            if (chipOwner && textOwner) {
+                                if (data.owner_finished) {
+                                    chipOwner.classList.add('completed');
+                                    textOwner.textContent = 'Pemilik: Sudah Mengisi';
+                                } else {
+                                    chipOwner.classList.remove('completed');
+                                    textOwner.textContent = 'Pemilik: Belum Mengisi';
+                                }
+                            }
+
+                            // Update status karyawan secara dinamis
+                            const chipEmployees = document.getElementById('chipEmployees');
+                            const textEmployees = document.getElementById('textEmployees');
+                            if (chipEmployees && textEmployees) {
+                                textEmployees.textContent = `Karyawan: ${data.employees_finished_count}/${data.total_employees} Selesai`;
+                                if (data.employees_finished_count >= data.total_employees) {
+                                    chipEmployees.classList.add('completed');
+                                } else {
+                                    chipEmployees.classList.remove('completed');
+                                }
+                            }
+
                             modal.classList.add('active');
                         } else {
                             alert('Terjadi kesalahan saat menyimpan data.');
@@ -604,10 +709,16 @@
                 }
             });
 
-            // Initial Render
-            if (sections.length > 0) {
-                renderStep();
-            } else {
+            // Selesai Button in Modal (untuk peran karyawan)
+            const btnModalSelesaiKaryawan = document.getElementById('btnModalSelesaiKaryawan');
+            if (btnModalSelesaiKaryawan) {
+                btnModalSelesaiKaryawan.addEventListener('click', function() {
+                    modal.classList.remove('active');
+                    showAsesmenSelesaiState();
+                });
+            }
+
+            function showAsesmenSelesaiState() {
                 // Sembunyikan elemen progres jika tidak ada pertanyaan
                 const progressCard = document.querySelector('.progress-card');
                 if (progressCard) progressCard.style.display = 'none';
@@ -625,7 +736,15 @@
                     `;
                 }
             }
+
+            // Initial Render
+            if (sections.length > 0) {
+                renderStep();
+            } else {
+                showAsesmenSelesaiState();
+            }
         });
     </script>
+    <script src="{{ asset('js/responsive-sidebar.js') }}"></script>
 </body>
 </html>

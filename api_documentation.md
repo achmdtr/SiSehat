@@ -1,3 +1,262 @@
+# Dokumentasi API & Kode Lengkap Back-End - SiSehat
+
+Dokumen ini berisi daftar lengkap rute (endpoints) API Back-End beserta seluruh source code file rute (`routes`) dan controller (`controllers`) pada proyek **SiSehat** dalam satu file terpadu.
+
+---
+
+## 🌐 Informasi Umum & Base URL
+
+* **Framework**: Laravel 10+
+* **Arsitektur**: Monolithic (MVC dengan Blade)
+* **Base URL (Local)**: 
+  * Melalui Laragon: `http://sisehat.test`
+  * Melalui Artisan: `http://localhost:8000`
+
+---
+
+## 🛡️ Middleware & Proteksi Rute
+
+Aplikasi ini menggunakan beberapa middleware untuk memproteksi endpoint:
+* **`auth`**: Hanya pengguna yang sudah login (terautentikasi) yang dapat mengakses.
+* **`guest`**: Hanya pengunjung yang belum login yang dapat mengakses (misal: halaman Login/Register).
+* **`verified`**: Pengguna harus sudah memverifikasi email mereka.
+* **`non.employee`**: Membatasi akses rute khusus untuk Pemilik/Owner UMKM saja (Karyawan tidak diperbolehkan mengakses).
+
+---
+
+## 🚀 Daftar Rute API / Endpoints
+
+### 1. Sistem Autentikasi & Akun (`routes/auth.php`)
+| No | HTTP Method | Path Endpoint | Controller Handler | Deskripsi Fungsi | Proteksi |
+| :---: | :--- | :--- | :--- | :--- | :--- |
+| **1** | `GET` | `/register` | `RegisteredUserController@create` | Menampilkan form registrasi akun baru | `guest` |
+| **2** | `POST` | `/register` | `RegisteredUserController@store` | **[POST API]** Mendaftarkan user baru ke database | `guest` |
+| **3** | `GET` | `/login` | `AuthenticatedSessionController@create` | Menampilkan form login | `guest` |
+| **4** | `POST` | `/login` | `AuthenticatedSessionController@store` | **[POST API]** Memproses autentikasi login pengguna | `guest` |
+| **5** | `POST` | `/logout` | `AuthenticatedSessionController@destroy` | **[POST API]** Menghapus session dan logout pengguna | `auth` |
+| **6** | `GET` | `/forgot-password` | `PasswordResetLinkController@create` | Menampilkan form lupa password | `guest` |
+| **7** | `POST` | `/forgot-password` | `PasswordResetLinkController@store` | **[POST API]** Mengirimkan link reset password ke email | `guest` |
+| **8** | `GET` | `/reset-password/{token}` | `NewPasswordController@create` | Menampilkan form pembuatan password baru | `guest` |
+| **9** | `POST` | `/reset-password` | `NewPasswordController@store` | **[POST API]** Memperbarui password lama dengan password baru | `guest` |
+| **10**| `PUT` | `/password` | `PasswordController@update` | **[PUT API]** Mengubah password dari dalam akun | `auth` |
+
+---
+
+### 2. Pengelolaan Profil Pengguna (`routes/web.php`)
+| No | HTTP Method | Path Endpoint | Controller Handler | Deskripsi Fungsi | Proteksi |
+| :---: | :--- | :--- | :--- | :--- | :--- |
+| **1** | `GET` | `/profile` | `ProfileController@edit` | Menampilkan halaman detail & edit profil | `auth`, `non.employee` |
+| **2** | `PATCH` | `/profile` | `ProfileController@update` | **[PATCH API]** Memperbarui data informasi profil | `auth`, `non.employee` |
+| **3** | `DELETE` | `/profile` | `ProfileController@destroy` | **[DELETE API]** Menghapus akun pengguna secara permanen | `auth`, `non.employee` |
+
+---
+
+### 3. Modul UMKM, Karyawan, & Asesmen (`routes/web.php`)
+| No | HTTP Method | Path Endpoint | Controller Handler | Deskripsi Fungsi | Proteksi |
+| :---: | :--- | :--- | :--- | :--- | :--- |
+| **1** | `GET` | `/dashboard` | `DashboardController@index` | Mengambil data dashboard ringkasan UMKM | `auth`, `verified`, `non.employee` |
+| **2** | `GET` | `/enam-faktor` | `DashboardController@enamFaktor` | Mengambil data 6 dimensi/faktor kesehatan UMKM | `auth`, `verified`, `non.employee` |
+| **3** | `GET` | `/faktor/{id}` | `DashboardController@detailFaktor` | Mengambil detail skor per faktor berdasarkan ID faktor | `auth`, `verified`, `non.employee` |
+| **4** | `GET` | `/rekomendasi` | `DashboardController@rekomendasi` | Menampilkan rekomendasi perbaikan untuk UMKM | `auth`, `verified`, `non.employee` |
+| **5** | `GET` | `/tambah-umkm` | `DashboardController@tambahUmkm` | Menampilkan halaman form pendaftaran UMKM | `auth`, `verified`, `non.employee` |
+| **6** | `POST` | `/tambah-umkm` | `DashboardController@simpanUmkm` | **[POST API]** Menyimpan data UMKM baru ke database | `auth`, `verified`, `non.employee` |
+| **7** | `GET` | `/manajemen-umkm` | `DashboardController@manajemenUmkm` | Mengambil list UMKM yang dikelola pemilik | `auth`, `verified`, `non.employee` |
+| **8** | `GET` | `/manajemen-karyawan/{id}` | `DashboardController@manajemenKaryawan` | Mengambil daftar karyawan di UMKM tertentu (berdasarkan ID UMKM) | `auth`, `verified`, `non.employee` |
+| **9** | `GET` | `/tambah-karyawan` | `DashboardController@tambahKaryawan` | Menampilkan halaman form pendaftaran karyawan | `auth`, `verified`, `non.employee` |
+| **10**| `POST` | `/tambah-karyawan` | `DashboardController@simpanKaryawan` | **[POST API]** Mendaftarkan dan menyimpan data karyawan baru | `auth`, `verified`, `non.employee` |
+| **11**| `GET` | `/asesmen` | `DashboardController@asesmenOrganisasi` | Menampilkan daftar pertanyaan kuesioner asesmen | `auth`, `verified` |
+| **12**| `POST` | `/asesmen` | `DashboardController@simpanAsesmen` | **[POST API]** Mengirim, menghitung, dan menyimpan jawaban asesmen | `auth`, `verified` |
+| **13**| `GET` | `/asesmen/ringkasan-pdf` | `DashboardController@unduhRingkasanAsesmenPdf` | Mengunduh hasil ringkasan laporan asesmen dalam format PDF | `auth`, `verified` |
+
+---
+
+## 📁 1. SOURCE CODE LENGKAP ROUTING (FILE RUTE)
+
+### 📌 `routes/web.php`
+```php
+<?php
+
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\DashboardController;
+use Illuminate\Support\Facades\Route;
+
+Route::get('/', function () {
+    return redirect()->route('login');
+});
+
+Route::middleware(['auth', 'verified', 'non.employee'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->name('dashboard');
+
+    Route::get('/enam-faktor', [DashboardController::class, 'enamFaktor'])
+        ->name('dashboard.faktor');
+
+    Route::get('/faktor/{id}', [DashboardController::class, 'detailFaktor'])
+        ->name('dashboard.faktor-detail');
+
+    Route::get('/rekomendasi', [DashboardController::class, 'rekomendasi'])
+        ->name('dashboard.rekomendasi');
+
+    Route::get('/tambah-umkm', [DashboardController::class, 'tambahUmkm'])
+        ->name('dashboard.tambah-umkm');
+
+    Route::post('/tambah-umkm', [DashboardController::class, 'simpanUmkm'])
+        ->name('dashboard.simpan-umkm');
+
+    Route::get('/manajemen-umkm', [DashboardController::class, 'manajemenUmkm'])->name('dashboard.manajemen-umkm');
+    Route::get('/manajemen-karyawan/{id}', [DashboardController::class, 'manajemenKaryawan'])->name('dashboard.manajemen-karyawan');
+    Route::get('/tambah-karyawan', [DashboardController::class, 'tambahKaryawan'])->name('dashboard.tambah-karyawan');
+    Route::post('/tambah-karyawan', [DashboardController::class, 'simpanKaryawan'])->name('dashboard.simpan-karyawan');
+});
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/asesmen', [DashboardController::class, 'asesmenOrganisasi'])->name('dashboard.asesmen');
+    Route::post('/asesmen', [DashboardController::class, 'simpanAsesmen'])->name('dashboard.simpan-asesmen');
+    Route::get('/asesmen/ringkasan-pdf', [DashboardController::class, 'unduhRingkasanAsesmenPdf'])->name('dashboard.asesmen-ringkasan-pdf');
+});
+
+Route::middleware(['auth', 'non.employee'])->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+require __DIR__.'/auth.php';
+```
+
+### 📌 `routes/auth.php`
+```php
+<?php
+
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Auth\ConfirmablePasswordController;
+use App\Http\Controllers\Auth\EmailVerificationNotificationController;
+use App\Http\Controllers\Auth\EmailVerificationPromptController;
+use App\Http\Controllers\Auth\NewPasswordController;
+use App\Http\Controllers\Auth\PasswordController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Auth\VerifyEmailController;
+use Illuminate\Support\Facades\Route;
+
+Route::middleware('guest')->group(function () {
+    Route::get('register', [RegisteredUserController::class, 'create'])
+        ->name('register');
+
+    Route::post('register', [RegisteredUserController::class, 'store']);
+
+    Route::get('login', [AuthenticatedSessionController::class, 'create'])
+        ->name('login');
+
+    Route::post('login', [AuthenticatedSessionController::class, 'store']);
+
+    Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
+        ->name('password.request');
+
+    Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])
+        ->name('password.email');
+
+    Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])
+        ->name('password.reset');
+
+    Route::post('reset-password', [NewPasswordController::class, 'store'])
+        ->name('password.store');
+});
+
+Route::middleware('auth')->group(function () {
+    Route::get('verify-email', EmailVerificationPromptController::class)
+        ->name('verification.notice');
+
+    Route::get('verify-email/{id}/{hash}', VerifyEmailController::class)
+        ->middleware(['signed', 'throttle:6,1'])
+        ->name('verification.verify');
+
+    Route::post('email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
+        ->middleware('throttle:6,1')
+        ->name('verification.send');
+
+    Route::get('confirm-password', [ConfirmablePasswordController::class, 'show'])
+        ->name('password.confirm');
+
+    Route::post('confirm-password', [ConfirmablePasswordController::class, 'store']);
+
+    Route::put('password', [PasswordController::class, 'update'])->name('password.update');
+
+    Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
+        ->name('logout');
+});
+```
+
+---
+
+## 📁 2. SOURCE CODE LENGKAP CONTROLLERS (LOGIKA BACK-END)
+
+### 📌 `app/Http/Controllers/ProfileController.php`
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Requests\ProfileUpdateRequest;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Redirect;
+use Illuminate\View\View;
+
+class ProfileController extends Controller
+{
+    /**
+     * Display the user's profile form.
+     */
+    public function edit(Request $request): View
+    {
+        return view('profile.edit', [
+            'user' => $request->user(),
+        ]);
+    }
+
+    /**
+     * Update the user's profile information.
+     */
+    public function update(ProfileUpdateRequest $request): RedirectResponse
+    {
+        $request->user()->fill($request->validated());
+
+        if ($request->user()->isDirty('email')) {
+            $request->user()->email_verified_at = null;
+        }
+
+        $request->user()->save();
+
+        return Redirect::route('profile.edit')->with('status', 'profile-updated');
+    }
+
+    /**
+     * Delete the user's account.
+     */
+    public function destroy(Request $request): RedirectResponse
+    {
+        $request->validateWithBag('userDeletion', [
+            'password' => ['required', 'current_password'],
+        ]);
+
+        $user = $request->user();
+
+        Auth::logout();
+
+        $user->delete();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return Redirect::to('/');
+    }
+}
+```
+
+### 📌 `app/Http/Controllers/DashboardController.php`
+```php
 <?php
 
 namespace App\Http\Controllers;
@@ -67,8 +326,6 @@ class DashboardController extends Controller
         $role = $user->role;
 
         // Base Query untuk Assessments
-        // Jika admin, ambil semua data global.
-        // Jika owner/employee, ambil semua data asesmen yang ada di UMKM mereka (kolektif)
         if ($role === 'admin') {
             $assessmentQuery = Assessment::query();
         } else {
@@ -104,7 +361,6 @@ class DashboardController extends Controller
                 round($latestAssessment->score_ect * 20),
             ];
             
-            // Untuk perhitungan insight nanti
             $currentFactors = (object) [
                 'ov' => $latestAssessment->score_ov,
                 'ldi' => $latestAssessment->score_ldi,
@@ -191,7 +447,6 @@ class DashboardController extends Controller
         }
 
         // Ambil Insight Dinamis dari tabel Recommendations
-        // 1. Identifikasi faktor terlemah (skala 1-5)
         $factorAverages = [
             1 => $currentFactors->ov,
             2 => $currentFactors->ldi,
@@ -201,12 +456,10 @@ class DashboardController extends Controller
             6 => $currentFactors->ect,
         ];
 
-        // Temukan ID faktor dengan skor terendah
         asort($factorAverages);
         $weakestFactorId = key($factorAverages);
         $weakestScore = current($factorAverages);
 
-        // 2. Ambil data rekomendasi berdasarkan skor faktor tersebut
         $recommendation = DB::table('recommendations')
             ->where('id_factor', $weakestFactorId)
             ->where('min_score', '<=', $weakestScore)
@@ -215,7 +468,6 @@ class DashboardController extends Controller
 
         $insightText = $recommendation ? $recommendation->insight_text : 'Fokuslah pada perbaikan faktor-faktor dengan skor terendah untuk meningkatkan efisiensi operasional.';
         
-        // Tambahkan nama faktor ke insight jika perlu
         $factorNames = [
             1 => 'Nilai Organisasi',
             2 => 'Keterlibatan Pemimpin',
@@ -248,9 +500,7 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
         $id_umkm = $user->id_umkm;
-        $role = $user->role;
 
-        // Ambil hasil dari asesmen TERBARU yang sudah selesai
         $latest = Assessment::where('id_umkm', $id_umkm)
             ->where('status', 'Selesai')
             ->latest()
@@ -259,7 +509,6 @@ class DashboardController extends Controller
         $avgFactors = $latest;
         $avgScore = ($latest->total_score ?? 0) * 20;
 
-        // Metadata untuk looping di view
         $factors = [
             [
                 'id' => 1,
@@ -323,9 +572,7 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
         $id_umkm = $user->id_umkm;
-        $role = $user->role;
 
-        // Ambil hasil dari asesmen TERBARU yang sudah selesai
         $latest = Assessment::where('id_umkm', $id_umkm)
             ->where('status', 'Selesai')
             ->latest()
@@ -342,7 +589,6 @@ class DashboardController extends Controller
         $avgScore = ($latest->total_score ?? 0) * 20;
         $avgFactors = $latest;
 
-        // Tentukan status berdasarkan skor (skala 100)
         $status = 'KONDISI KURANG';
         if ($avgScore >= 75) $status = 'KONDISI BAIK';
         elseif ($avgScore >= 50) $status = 'KONDISI CUKUP';
@@ -371,7 +617,6 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
         
-        // Proteksi: Employee tidak boleh tambah UMKM
         if ($user->role === 'employee') {
             abort(403, 'Akses Ditolak. Karyawan tidak memiliki izin untuk menambah UMKM.');
         }
@@ -383,7 +628,6 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
         
-        // Proteksi: Employee tidak boleh simpan UMKM
         if ($user->role === 'employee') {
             return response()->json([
                 'success' => false,
@@ -398,7 +642,6 @@ class DashboardController extends Controller
         ]);
 
         try {
-            // Cek apakah user sudah memiliki UMKM
             $existingUmkm = Umkm::where('id_user', $user->id_user)->first();
             
             if ($existingUmkm) {
@@ -415,7 +658,6 @@ class DashboardController extends Controller
                 'id_user' => $user->id_user,
             ]);
 
-            // Update user's id_umkm agar terhubung dengan UMKM baru
             $user->update(['id_umkm' => $umkm->id_umkm]);
 
             return response()->json(['success' => true]);
@@ -456,7 +698,6 @@ class DashboardController extends Controller
 
         $validated = $validator->validated();
 
-        // Logika Pengelompokan Umur Otomatis
         $ageInput = $validated['age'];
         $ageCategory = 3; // Default > 40
         if ($ageInput < 30) {
@@ -469,13 +710,12 @@ class DashboardController extends Controller
             $newEmployee = User::create([
                 'nama_user' => $validated['nama_user'],
                 'gender' => $validated['gender'],
-                'age' => $ageCategory, // Simpan kategori
+                'age' => $ageCategory,
                 'password' => bcrypt($validated['password']),
                 'role' => 'employee',
-                'id_umkm' => $owner->id_umkm, // Otomatis ke UMKM milik owner
+                'id_umkm' => $owner->id_umkm,
             ]);
 
-            // OTOMATIS BUKA KEMBALI ASESMEN JIKA ADA YANG SUDAH SELESAI
             $latestAssessment = Assessment::where('id_umkm', $owner->id_umkm)
                 ->where('status', 'Selesai')
                 ->latest()
@@ -485,7 +725,7 @@ class DashboardController extends Controller
                 $latestAssessment->update([
                     'status' => 'Menunggu',
                     'finished_at' => null,
-                    'employee_finished' => false // Set false agar chip status karyawan berubah lagi
+                    'employee_finished' => false
                 ]);
             }
 
@@ -506,7 +746,6 @@ class DashboardController extends Controller
             return redirect()->route('login');
         }
 
-        // Ambil data UMKM yang dimiliki oleh user ini
         $umkm = Umkm::where('id_user', $user->id_user)->get();
 
         return view('manajemen-umkm', compact('umkm'));
@@ -514,10 +753,8 @@ class DashboardController extends Controller
 
     public function manajemenKaryawan($id)
     {
-        // Ambil info UMKM
         $umkm = Umkm::findOrFail($id);
         
-        // Ambil karyawan yang terdaftar di UMKM ini
         $karyawan = User::where('id_umkm', $id)
                         ->where('role', 'employee')
                         ->get();
@@ -531,21 +768,17 @@ class DashboardController extends Controller
         $role = $user->role;
         $id_umkm = $user->id_umkm;
 
-        // Ambil asesmen paling baru (terlepas dari statusnya)
         $activeAssessment = Assessment::where('id_umkm', $id_umkm)
             ->latest()
             ->first();
 
-        // Jika ada asesmen dan statusnya sudah 'Selesai' atau user sudah mengisi bagiannya
         if ($activeAssessment) {
-            // Cek apakah user sudah punya data di tabel responses untuk asesmen ini
             $hasSubmitted = DB::table('responses')
                 ->where('id_assessment', $activeAssessment->id_assessment)
                 ->where('id_user', $user->id_user)
                 ->exists();
 
             if ($hasSubmitted || ($role === 'owner' && $activeAssessment->owner_finished) || $activeAssessment->status === 'Selesai') {
-                // Hitung progres karyawan untuk ditampilkan di view even if already finished
                 $totalEmployees = User::where('id_umkm', $id_umkm)->where('role', 'employee')->count();
                 $employeesFinishedCount = DB::table('responses')
                     ->join('users', 'responses.id_user', '=', 'users.id_user')
@@ -565,7 +798,6 @@ class DashboardController extends Controller
             }
         }
 
-        // Filter pertanyaan berdasarkan role
         $questions = DB::table('questions')
             ->where(function($query) use ($role) {
                 $query->where('target_role', $role)
@@ -602,12 +834,10 @@ class DashboardController extends Controller
             ];
         }
 
-        // Re-index to numeric array for JS
         $sections = array_values($sections);
 
         $ownerFinished = $activeAssessment ? $activeAssessment->owner_finished : false;
         
-        // Hitung progres karyawan
         $totalEmployees = User::where('id_umkm', $id_umkm)->where('role', 'employee')->count();
         $employeesFinishedCount = 0;
         if ($activeAssessment) {
@@ -637,7 +867,6 @@ class DashboardController extends Controller
         
         $id_umkm = $user->id_umkm;
 
-        // Ambil asesmen terbaru untuk UMKM ini
         $latestAssessment = Assessment::where('id_umkm', $id_umkm)
             ->where('status', 'Selesai')
             ->latest()
@@ -647,7 +876,6 @@ class DashboardController extends Controller
             return redirect()->route('dashboard.faktor')->with('error', 'Belum ada data asesmen yang selesai untuk UMKM Anda.');
         }
 
-        // Ambil meta data faktor
         $factorMeta = [
             1 => ['title' => 'Nilai Organisasi', 'col' => 'score_ov', 'desc' => 'Faktor ini mengevaluasi nilai-nilai inti dan budaya operasional yang mendasari praktik etika dan interaksi profesional di dalam organisasi.'],
             2 => ['title' => 'Keterlibatan Pemimpin', 'col' => 'score_ldi', 'desc' => 'Mengevaluasi peran aktif pemimpin dalam operasional dan bimbingan karyawan.'],
@@ -666,9 +894,7 @@ class DashboardController extends Controller
         $column = $meta['col'];
         $score = (float) ($latestAssessment->$column ?? 0);
 
-        // Ambil pertanyaan untuk faktor ini untuk sub-indicators
         $questions = DB::table('questions')->where('id_factor', $id)->get();
-        // Ambil rata-rata jawaban untuk setiap pertanyaan dari tabel responses
         $responses = DB::table('responses')
             ->where('id_assessment', $latestAssessment->id_assessment)
             ->get()
@@ -684,11 +910,10 @@ class DashboardController extends Controller
             $qIdNum = (int) str_replace('OH', '', $qId);
             $userResponses = $responses->get($qId);
             
-            $s = 1.0; // Default
+            $s = 1.0;
             if ($userResponses && $userResponses->isNotEmpty()) {
                 $avgRaw = $userResponses->avg('nilai');
                 if ($qIdNum <= 6) {
-                    // Konversi skala 1-3 ke 1-5
                     $s = (($avgRaw - 1) / 2.0) * 4 + 1;
                 } else {
                     $s = $avgRaw;
@@ -725,27 +950,23 @@ class DashboardController extends Controller
             $newAnswers = $request->input('answers');
             $id_umkm = $user->id_umkm;
 
-            // Cari asesmen yang sedang berjalan (status Menunggu) untuk UMKM ini
             $assessment = Assessment::where('id_umkm', $id_umkm)
                 ->where('status', 'Menunggu')
                 ->first();
 
             if (!$assessment) {
-                // Jika belum ada, buat record baru
                 $assessment = new Assessment();
                 $assessment->id_umkm = $id_umkm;
-                $assessment->id_user = $user->id_user; // Tetap simpan id_user utama
+                $assessment->id_user = $user->id_user;
                 $assessment->status = 'Menunggu';
                 $assessment->started_at = now();
                 $assessment->answers = json_encode($newAnswers);
             } else {
-                // Jika sudah ada, gabungkan jawaban baru dengan yang lama
                 $existingAnswers = json_decode($assessment->answers, true) ?? [];
                 $mergedAnswers = array_merge($existingAnswers, $newAnswers);
                 $assessment->answers = json_encode($mergedAnswers);
             }
 
-            // Tandai siapa yang menyelesaikan bagiannya
             if ($user->role === 'owner') {
                 $assessment->owner_finished = true;
                 $assessment->id_owner = $user->id_user;
@@ -756,7 +977,6 @@ class DashboardController extends Controller
 
             $assessment->save();
 
-            // SIMPAN DATA KE TABEL RESPONSES (Individual)
             $scoreMap3 = [
                 'Tidak' => 1, 'Sedang Proses' => 2, 'Ya' => 3,
                 'Modal Sendiri' => 1, 'Keluarga' => 2, 'Bank / Kredit' => 3
@@ -775,10 +995,8 @@ class DashboardController extends Controller
                 );
             }
 
-            // Hitung skor akhir dari seluruh partisipan (Rata-rata)
             $this->calculateAndSaveScores($assessment);
 
-            // Cek apakah seluruh anggota UMKM (Owner + Karyawan) sudah mengisi
             $totalAnggota = User::where('id_umkm', $id_umkm)->count();
             $totalResponden = DB::table('responses')
                 ->where('id_assessment', $assessment->id_assessment)
@@ -791,7 +1009,6 @@ class DashboardController extends Controller
                 $assessment->save();
             }
 
-            // Hitung progres karyawan untuk response
             $totalEmployees = User::where('id_umkm', $id_umkm)->where('role', 'employee')->count();
             $employeesFinishedCount = DB::table('responses')
                 ->join('users', 'responses.id_user', '=', 'users.id_user')
@@ -815,39 +1032,31 @@ class DashboardController extends Controller
         }
     }
 
-    /**
-     * Helper untuk menghitung skor rata-rata dari semua partisipan di tabel responses
-     */
     private function calculateAndSaveScores($assessment)
     {
-        // Ambil semua response untuk sesi ini
         $responses = DB::table('responses')
             ->where('id_assessment', $assessment->id_assessment)
             ->get();
 
         if ($responses->isEmpty()) return;
 
-        // Kelompokkan nilai per pertanyaan
         $questionValues = [];
         foreach ($responses as $r) {
             $questionValues[$r->id_question][] = $r->nilai;
         }
 
-        // Hitung rata-rata nilai per pertanyaan, lalu konversi ke skala 1-5
         $averagedAnswers = [];
         foreach ($questionValues as $qId => $values) {
             $avgRaw = array_sum($values) / count($values);
             $qIdNum = (int) str_replace('OH', '', $qId);
 
             if ($qIdNum <= 6) {
-                // Konversi skala 1-3 ke 1-5: ((raw-1)/2)*4 + 1
                 $averagedAnswers[$qId] = (($avgRaw - 1) / 2.0) * 4 + 1;
             } else {
                 $averagedAnswers[$qId] = $avgRaw;
             }
         }
 
-        // Kelompokkan ke dalam faktor
         $allQuestions = DB::table('questions')->get();
         $factorScores = [1 => [], 2 => [], 3 => [], 4 => [], 5 => [], 6 => []];
 
@@ -870,7 +1079,6 @@ class DashboardController extends Controller
 
         $assessment->total_score = ($assessment->score_ov + $assessment->score_ldi + $assessment->score_ins + $assessment->score_ops + $assessment->score_weq + $assessment->score_ect) / 6;
         
-        // Penentuan Kategori
         if ($assessment->total_score <= 2.33) {
             $assessment->kategori_kuartil = 'Kurang';
         } elseif ($assessment->total_score <= 3.66) {
@@ -882,9 +1090,6 @@ class DashboardController extends Controller
         $assessment->save();
     }
 
-    /**
-     * Unduh ringkasan jawaban asesmen UMKM terkini (PDF).
-     */
     public function unduhRingkasanAsesmenPdf()
     {
         $user = auth()->user();
@@ -901,7 +1106,6 @@ class DashboardController extends Controller
             abort(404, 'Belum ada data asesmen.');
         }
 
-        // Ambil rata-rata jawaban per pertanyaan
         $responses = DB::table('responses')
             ->where('id_assessment', $assessment->id_assessment)
             ->get()
@@ -932,7 +1136,7 @@ class DashboardController extends Controller
         $filename = 'Ringkasan_Asesmen_'.preg_replace('/[^A-Za-z0-9_-]+/', '_', $user->nama_user).'_'.date('Y-m-d').'.pdf';
 
         return Pdf::loadView('pdf.asesmen-ringkasan', [
-            'nama' => $user->nama_user,
+            'name' => $user->nama_user,
             'peran' => $user->role === 'employee' ? 'Karyawan' : 'Pemilik UMKM',
             'tanggalCetak' => now()->format('d/m/Y H:i'),
             'statusAsesmen' => $assessment->status,
@@ -942,3 +1146,4 @@ class DashboardController extends Controller
             ->download($filename);
     }
 }
+```

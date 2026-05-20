@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard SiSehat - Rekomendasi</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="{{ asset('css/responsive-layout.css') }}" rel="stylesheet">
 
     <style>
         /* Reset & Base */
@@ -361,5 +362,6 @@
         <div style="height: 40px;"></div>
     </div>
 
+    <script src="{{ asset('js/responsive-sidebar.js') }}"></script>
 </body>
 </html>
