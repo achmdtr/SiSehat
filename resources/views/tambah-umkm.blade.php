@@ -322,14 +322,14 @@
                     @csrf
                     
                     <div class="form-group">
-                        <label>Nama UMKM</label>
-                        <input type="text" name="nama_umkm" placeholder="Contoh: PT Sehat Selalu">
+                        <label for="nama_umkm">Nama UMKM</label>
+                        <input type="text" id="nama_umkm" name="nama_umkm" placeholder="Contoh: PT Sehat Selalu">
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label>Industri</label>
-                            <select name="industry">
+                            <label for="industry">Industri</label>
+                            <select id="industry" name="industry">
                                 <option value="" disabled selected>Pilih Kategori Industri</option>
                                 <option value="1">Makanan dan Minuman (F&B)</option>
                                 <option value="2">Fashion</option>
@@ -337,8 +337,8 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>Usia UMKM</label>
-                            <select name="usia_usaha">
+                            <label for="usia_usaha">Usia UMKM</label>
+                            <select id="usia_usaha" name="usia_usaha">
                                 <option value="" disabled selected>Pilih Usia Usaha</option>
                                 <option value="1">< 1 Tahun</option>
                                 <option value="2">1 - 3 Tahun</option>
