@@ -21,6 +21,14 @@ use Illuminate\Support\Facades\Route;
 // ==========================================
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::get('/ping', function () {
+    return response()->json([
+        'success' => true,
+        'message' => 'Koneksi API SiSehat berhasil!',
+        'environment' => app()->environment(),
+        'timestamp' => now()->toIso8601String()
+    ]);
+});
 
 // ==========================================
 // Terproteksi (Wajib Token Bearer Sanctum)
