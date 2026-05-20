@@ -19,6 +19,9 @@ use Illuminate\Support\Facades\Route;
 // ==========================================
 // Publik (Tanpa Token)
 // ==========================================
+Route::get('/', function () {
+    return view('api-docs');
+});
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/ping', function () {
