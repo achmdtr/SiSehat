@@ -446,30 +446,36 @@
                 <div class="glass-card factor-box">
                     <p class="label">Distribusi Faktor Kesehatan</p>
                     <div class="custom-bar-list">
-                        <div class="custom-bar-item">
-                            <div class="cbi-header"><span class="cbi-label">Nilai Organisasi</span><span class="cbi-value text-green">{{ $data['data_factors'][0] }}%</span></div>
-                            <div class="cbi-track"><div class="cbi-fill fill-green" style="width: {{ $data['data_factors'][0] }}%;"></div></div>
-                        </div>
-                        <div class="custom-bar-item">
-                            <div class="cbi-header"><span class="cbi-label">Keterlibatan Pemimpin</span><span class="cbi-value text-yellow">{{ $data['data_factors'][1] }}%</span></div>
-                            <div class="cbi-track"><div class="cbi-fill fill-yellow" style="width: {{ $data['data_factors'][1] }}%;"></div></div>
-                        </div>
-                        <div class="custom-bar-item">
-                            <div class="cbi-header"><span class="cbi-label">Sumber Daya Institusi</span><span class="cbi-value text-red">{{ $data['data_factors'][2] }}%</span></div>
-                            <div class="cbi-track"><div class="cbi-fill fill-red" style="width: {{ $data['data_factors'][2] }}%;"></div></div>
-                        </div>
-                        <div class="custom-bar-item">
-                            <div class="cbi-header"><span class="cbi-label">Stabilitas Operasional</span><span class="cbi-value text-yellow">{{ $data['data_factors'][3] }}%</span></div>
-                            <div class="cbi-track"><div class="cbi-fill fill-yellow" style="width: {{ $data['data_factors'][3] }}%;"></div></div>
-                        </div>
-                        <div class="custom-bar-item">
-                            <div class="cbi-header"><span class="cbi-label">Kualitas Tempat Kerja</span><span class="cbi-value text-green">{{ $data['data_factors'][4] }}%</span></div>
-                            <div class="cbi-track"><div class="cbi-fill fill-green" style="width: {{ $data['data_factors'][4] }}%;"></div></div>
-                        </div>
-                        <div class="custom-bar-item">
-                            <div class="cbi-header"><span class="cbi-label">Kinerja Ekonomi</span><span class="cbi-value text-red">{{ $data['data_factors'][5] }}%</span></div>
-                            <div class="cbi-track"><div class="cbi-fill fill-red" style="width: {{ $data['data_factors'][5] }}%;"></div></div>
-                        </div>
+                        @php
+                            $factorLabels = [
+                                'Nilai Organisasi',
+                                'Keterlibatan Pemimpin',
+                                'Sumber Daya Institusi',
+                                'Stabilitas Operasional',
+                                'Kualitas Tempat Kerja',
+                                'Kinerja Ekonomi'
+                            ];
+                            $getFactorColor = function($score) {
+                                if ($score >= 75) return 'green';
+                                if ($score >= 50) return 'yellow';
+                                return 'red';
+                            };
+                        @endphp
+                        @foreach($factorLabels as $index => $label)
+                            @php
+                                $score = $data['data_factors'][$index] ?? 0;
+                                $color = $getFactorColor($score);
+                            @endphp
+                            <div class="custom-bar-item">
+                                <div class="cbi-header">
+                                    <span class="cbi-label">{{ $label }}</span>
+                                    <span class="cbi-value text-{{ $color }}">{{ $score }}%</span>
+                                </div>
+                                <div class="cbi-track">
+                                    <div class="cbi-fill fill-{{ $color }}" style="width: {{ $score }}%;"></div>
+                                </div>
+                            </div>
+                        @endforeach
                     </div>
                 </div>
 
@@ -494,12 +500,19 @@
         const dataTipeBisnis = {!! json_encode($data['data_tipe_bisnis'] ?? [28.63, 56.56, 16.82]) !!};
         const dataRadar = {!! json_encode($data['data_radar'] ?? [70, 50, 40, 55, 60, 35]) !!};
         
-        // 1. Pie Chart - Legend di kanan & Tooltip Persentase
-        new Chart(document.getElementById('pieChart'), {
+        const originalPieColors = ['#3CC3DF', '#8979FF', '#FF928A'];
+        const grayPieColors = ['#BDC7D0', '#D2DCE5', '#E6EEF4']; // Clean, aesthetic shades of gray
+
+        const pieChart = new Chart(document.getElementById('pieChart'), {
             type: 'pie',
             data: {
                 labels: ['Makanan dan Minuman', 'Fashion', 'Grosir dan Eceran'],
-                datasets: [{ data: dataTipeBisnis, backgroundColor: ['#3CC3DF', '#8979FF', '#FF928A'], borderWidth: 0 }]
+                datasets: [{ 
+                    data: dataTipeBisnis, 
+                    backgroundColor: [...grayPieColors], 
+                    hoverBackgroundColor: [...originalPieColors],
+                    borderWidth: 0 
+                }]
             },
             options: { 
                 responsive: true, 
@@ -507,7 +520,28 @@
                 plugins: { 
                     legend: { 
                         position: 'right', 
-                        labels: { usePointStyle: true, boxWidth: 8, font: { size: 10} } 
+                        labels: { 
+                            usePointStyle: true, 
+                            boxWidth: 8, 
+                            font: { size: 10 },
+                            generateLabels: function(chart) {
+                                const data = chart.data;
+                                if (data.labels.length && data.datasets.length) {
+                                    return data.labels.map(function(label, i) {
+                                        const meta = chart.getDatasetMeta(0);
+                                        return {
+                                            text: label,
+                                            fillStyle: originalPieColors[i],
+                                            strokeStyle: originalPieColors[i],
+                                            lineWidth: 0,
+                                            hidden: isNaN(data.datasets[0].data[i]) || (meta.data[i] && meta.data[i].hidden),
+                                            index: i
+                                        };
+                                    });
+                                }
+                                return [];
+                            }
+                        } 
                     },
                     tooltip: {
                         callbacks: {
@@ -525,6 +559,15 @@
                                 let percentage = ((value / total) * 100).toFixed(1) + '%';
                                 
                                 return label + percentage;
+                            },
+                            labelColor: function(context) {
+                                const index = context.dataIndex;
+                                return {
+                                    borderColor: originalPieColors[index],
+                                    backgroundColor: originalPieColors[index],
+                                    borderWidth: 0,
+                                    borderRadius: 2
+                                };
                             }
                         }
                     }
@@ -574,7 +617,8 @@
                     },
                     {
                         data: dataAgeNormalized, 
-                        backgroundColor: ['#9b8afe', '#ffa09e', '#5cd2e6'],
+                        backgroundColor: ['#BDC7D0', '#D2DCE5', '#E6EEF4'],
+                        hoverBackgroundColor: ['#9b8afe', '#ffa09e', '#5cd2e6'],
                         grouped: false, order: 1, barPercentage: 0.8, categoryPercentage: 1.0
                     }
                 ]
