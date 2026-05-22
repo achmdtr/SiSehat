@@ -79,7 +79,7 @@ class DashboardController extends Controller
         $latestAssessment = null;
         if ($role !== 'admin') {
             $latestAssessment = Assessment::where('id_umkm', $user->id_umkm)
-                ->where('status', 'Selesai')
+                ->whereIn('status', ['Selesai', 'finished'])
                 ->latest()
                 ->first();
         }
@@ -252,7 +252,7 @@ class DashboardController extends Controller
 
         // Ambil hasil dari asesmen TERBARU yang sudah selesai
         $latest = Assessment::where('id_umkm', $id_umkm)
-            ->where('status', 'Selesai')
+            ->whereIn('status', ['Selesai', 'finished'])
             ->latest()
             ->first();
 
@@ -327,7 +327,7 @@ class DashboardController extends Controller
 
         // Ambil hasil dari asesmen TERBARU yang sudah selesai
         $latest = Assessment::where('id_umkm', $id_umkm)
-            ->where('status', 'Selesai')
+            ->whereIn('status', ['Selesai', 'finished'])
             ->latest()
             ->first();
 
@@ -477,7 +477,7 @@ class DashboardController extends Controller
 
             // OTOMATIS BUKA KEMBALI ASESMEN JIKA ADA YANG SUDAH SELESAI
             $latestAssessment = Assessment::where('id_umkm', $owner->id_umkm)
-                ->where('status', 'Selesai')
+                ->whereIn('status', ['Selesai', 'finished'])
                 ->latest()
                 ->first();
 
@@ -544,7 +544,7 @@ class DashboardController extends Controller
                 ->where('id_user', $user->id_user)
                 ->exists();
 
-            if ($hasSubmitted || ($role === 'owner' && $activeAssessment->owner_finished) || $activeAssessment->status === 'Selesai') {
+            if ($hasSubmitted || ($role === 'owner' && $activeAssessment->owner_finished) || in_array($activeAssessment->status, ['Selesai', 'finished'])) {
                 // Hitung progres karyawan untuk ditampilkan di view even if already finished
                 $totalEmployees = User::where('id_umkm', $id_umkm)->where('role', 'employee')->count();
                 $employeesFinishedCount = DB::table('responses')
@@ -639,7 +639,7 @@ class DashboardController extends Controller
 
         // Ambil asesmen terbaru untuk UMKM ini
         $latestAssessment = Assessment::where('id_umkm', $id_umkm)
-            ->where('status', 'Selesai')
+            ->whereIn('status', ['Selesai', 'finished'])
             ->latest()
             ->first();
 
@@ -893,7 +893,7 @@ class DashboardController extends Controller
         }
 
         $assessment = Assessment::where('id_umkm', $user->id_umkm)
-            ->whereIn('status', ['Menunggu', 'Selesai'])
+            ->whereIn('status', ['Menunggu', 'Selesai', 'finished'])
             ->orderByDesc('started_at')
             ->first();
 
