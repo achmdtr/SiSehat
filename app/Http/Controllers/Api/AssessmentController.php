@@ -10,6 +10,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Cache;
 
 class AssessmentController extends Controller
 {
@@ -271,6 +272,21 @@ class AssessmentController extends Controller
                 ->distinct('responses.id_user')
                 ->count('responses.id_user');
 
+            // Invalidate cache
+            Cache::forget("umkm_latest_assessment_{$id_umkm}");
+            Cache::forget("umkm_avg_factors_{$id_umkm}");
+            Cache::forget("umkm_avg_total_score_{$id_umkm}");
+            Cache::forget("umkm_insight_{$id_umkm}_{$assessment->id_assessment}");
+            Cache::forget("umkm_insight_empty_{$id_umkm}");
+            Cache::forget("umkm_factors_details_{$id_umkm}_{$assessment->id_assessment}");
+            Cache::forget("umkm_factors_details_empty_{$id_umkm}");
+            Cache::forget('global_stats_total_responden');
+            Cache::forget('global_top_umkm');
+            Cache::forget('global_bottom_umkm');
+            Cache::forget('global_avg_total_score');
+            Cache::forget('global_avg_factors');
+            Cache::forget('global_avg_factors_raw');
+
             return response()->json([
                 'success' => true,
                 'message' => 'Asesmen berhasil disimpan',
@@ -307,21 +323,25 @@ class AssessmentController extends Controller
         }
 
         // Ambil asesmen terbaru yang sudah selesai
-        $latestAssessment = Assessment::where('id_umkm', $id_umkm)
-            ->where('status', 'Selesai')
-            ->latest()
-            ->first();
+        $latestAssessment = Cache::remember("umkm_latest_assessment_{$id_umkm}", 300, function() use ($id_umkm) {
+            return Assessment::where('id_umkm', $id_umkm)
+                ->whereIn('status', ['Selesai', 'finished'])
+                ->latest()
+                ->first();
+        });
 
         // Base Query untuk Assessments Global
         $assessmentQuery = Assessment::query();
 
         // Statistik
         $stats = [
-            'total_umkm' => Umkm::count(),
-            'total_responden' => Assessment::count(),
+            'total_umkm' => Cache::remember('global_stats_total_umkm', 600, fn() => Umkm::count()),
+            'total_responden' => Cache::remember('global_stats_total_responden', 600, fn() => Assessment::count()),
             'total_kesehatan' => $latestAssessment 
                 ? round($latestAssessment->total_score * 20) 
-                : round(($assessmentQuery->avg('total_score') ?? 0) * 20),
+                : Cache::remember("global_avg_total_score", 300, function() use ($assessmentQuery) {
+                    return round(($assessmentQuery->avg('total_score') ?? 0) * 20);
+                }),
         ];
 
         // Data Radar Chart
@@ -344,7 +364,8 @@ class AssessmentController extends Controller
                 'ect' => $latestAssessment->score_ect,
             ];
         } else {
-            $avgFactors = Assessment::select(
+            $avgFactors = Cache::remember("global_avg_factors_raw", 300, function() {
+                return Assessment::select(
                     DB::raw('AVG(score_ov) as ov'),
                     DB::raw('AVG(score_ldi) as ldi'),
                     DB::raw('AVG(score_ins) as ins'),
@@ -352,6 +373,7 @@ class AssessmentController extends Controller
                     DB::raw('AVG(score_weq) as weq'),
                     DB::raw('AVG(score_ect) as ect')
                 )->first();
+            });
 
             $data_factors = [
                 round(($avgFactors->ov ?? 0) * 20, 2),
@@ -381,6 +403,34 @@ class AssessmentController extends Controller
         }
 
         // Ambil Insight Dinamis
+        $cacheInsightKey = $latestAssessment 
+            ? "umkm_insight_{$id_umkm}_{$latestAssessment->id_assessment}"
+            : "umkm_insight_empty_{$id_umkm}";
+
+        $insightText = Cache::remember($cacheInsightKey, 300, function() use ($currentFactors) {
+            $factorAverages = [
+                1 => $currentFactors->ov,
+                2 => $currentFactors->ldi,
+                3 => $currentFactors->ins,
+                4 => $currentFactors->ops,
+                5 => $currentFactors->weq,
+                6 => $currentFactors->ect,
+            ];
+
+            asort($factorAverages);
+            $weakestFactorId = key($factorAverages);
+            $weakestScore = current($factorAverages);
+
+            $recommendation = DB::table('recommendations')
+                ->where('id_factor', $weakestFactorId)
+                ->where('min_score', '<=', $weakestScore)
+                ->where('max_score', '>=', $weakestScore)
+                ->first();
+
+            return $recommendation ? $recommendation->insight_text : 'Fokuslah pada perbaikan faktor-faktor dengan skor terendah untuk meningkatkan efisiensi operasional.';
+        });
+
+        // Hitung weakest factor name untuk label
         $factorAverages = [
             1 => $currentFactors->ov,
             2 => $currentFactors->ldi,
@@ -389,19 +439,9 @@ class AssessmentController extends Controller
             5 => $currentFactors->weq,
             6 => $currentFactors->ect,
         ];
-
         asort($factorAverages);
         $weakestFactorId = key($factorAverages);
-        $weakestScore = current($factorAverages);
 
-        $recommendation = DB::table('recommendations')
-            ->where('id_factor', $weakestFactorId)
-            ->where('min_score', '<=', $weakestScore)
-            ->where('max_score', '>=', $weakestScore)
-            ->first();
-
-        $insightText = $recommendation ? $recommendation->insight_text : 'Fokuslah pada perbaikan faktor-faktor dengan skor terendah untuk meningkatkan efisiensi operasional.';
-        
         $factorNames = [
             1 => 'Nilai Organisasi',
             2 => 'Keterlibatan Pemimpin',
@@ -411,21 +451,26 @@ class AssessmentController extends Controller
             6 => 'Kinerja Ekonomi',
         ];
         $weakestFactorName = $factorNames[$weakestFactorId] ?? 'Faktor Utama';
+        $weakestScore = current($factorAverages);
 
         // Ranking UMKM Global
-        $top_umkm = Assessment::join('umkm', 'assessments.id_umkm', '=', 'umkm.id_umkm')
-            ->select('umkm.nama_umkm', DB::raw('AVG(total_score) * 20 as total_score'))
-            ->groupBy('umkm.id_umkm', 'umkm.nama_umkm')
-            ->orderByDesc('total_score')
-            ->limit(3)
-            ->get();
+        $top_umkm = Cache::remember('global_top_umkm', 600, function() {
+            return Assessment::join('umkm', 'assessments.id_umkm', '=', 'umkm.id_umkm')
+                ->select('umkm.nama_umkm', DB::raw('AVG(total_score) * 20 as total_score'))
+                ->groupBy('umkm.id_umkm', 'umkm.nama_umkm')
+                ->orderByDesc('total_score')
+                ->limit(3)
+                ->get();
+        });
 
-        $bottom_umkm = Assessment::join('umkm', 'assessments.id_umkm', '=', 'umkm.id_umkm')
-            ->select('umkm.nama_umkm', DB::raw('AVG(total_score) * 20 as total_score'))
-            ->groupBy('umkm.id_umkm', 'umkm.nama_umkm')
-            ->orderBy('total_score')
-            ->limit(3)
-            ->get();
+        $bottom_umkm = Cache::remember('global_bottom_umkm', 600, function() {
+            return Assessment::join('umkm', 'assessments.id_umkm', '=', 'umkm.id_umkm')
+                ->select('umkm.nama_umkm', DB::raw('AVG(total_score) * 20 as total_score'))
+                ->groupBy('umkm.id_umkm', 'umkm.nama_umkm')
+                ->orderBy('total_score')
+                ->limit(3)
+                ->get();
+        });
 
         // 6 Factors Breakdown Details
         $factorMeta = [
@@ -462,59 +507,65 @@ class AssessmentController extends Controller
         ];
 
         $translations = $this->questionTextTranslations();
-        $factorsDetails = [];
+        
+        $factorsDetailsCacheKey = $latestAssessment 
+            ? "umkm_factors_details_{$id_umkm}_{$latestAssessment->id_assessment}"
+            : "umkm_factors_details_empty_{$id_umkm}";
 
-        foreach ($factorMeta as $id => $meta) {
-            $col = $meta['col'];
-            $score = $latestAssessment ? (float) $latestAssessment->$col : ($currentFactors->$col ?? 1.0);
-            
-            // Get sub-indicators for this factor if we have an assessment
-            $subIndicators = [];
-            if ($latestAssessment) {
-                $questions = DB::table('questions')->where('id_factor', $id)->get();
-                $responses = DB::table('responses')
-                    ->where('id_assessment', $latestAssessment->id_assessment)
-                    ->get()
-                    ->groupBy('id_question');
+        $factorsDetails = Cache::remember($factorsDetailsCacheKey, 300, function() use ($latestAssessment, $factorMeta, $currentFactors, $translations) {
+            $details = [];
+            foreach ($factorMeta as $id => $meta) {
+                $col = $meta['col'];
+                $score = $latestAssessment ? (float) $latestAssessment->$col : ($currentFactors->$col ?? 1.0);
+                
+                $subIndicators = [];
+                if ($latestAssessment) {
+                    $questions = DB::table('questions')->where('id_factor', $id)->get();
+                    $responses = DB::table('responses')
+                        ->where('id_assessment', $latestAssessment->id_assessment)
+                        ->get()
+                        ->groupBy('id_question');
 
-                foreach ($questions as $q) {
-                    $qId = $q->id_question;
-                    $qIdNum = (int) str_replace('OH', '', $qId);
-                    $userResponses = $responses->get($qId);
-                    
-                    $s = 1.0;
-                    if ($userResponses && $userResponses->isNotEmpty()) {
-                        $avgRaw = $userResponses->avg('nilai');
-                        if ($qIdNum <= 6) {
-                            $s = (($avgRaw - 1) / 2.0) * 4 + 1;
-                        } else {
-                            $s = $avgRaw;
+                    foreach ($questions as $q) {
+                        $qId = $q->id_question;
+                        $qIdNum = (int) str_replace('OH', '', $qId);
+                        $userResponses = $responses->get($qId);
+                        
+                        $s = 1.0;
+                        if ($userResponses && $userResponses->isNotEmpty()) {
+                            $avgRaw = $userResponses->avg('nilai');
+                            if ($qIdNum <= 6) {
+                                $s = (($avgRaw - 1) / 2.0) * 4 + 1;
+                            } else {
+                                $s = $avgRaw;
+                            }
                         }
+                        
+                        $cat = ($s >= 3.75) ? 'Tinggi' : (($s >= 2.5) ? 'Sedang' : 'Rendah');
+                        $subIndicators[] = [
+                            'question_id' => $qId,
+                            'question_text' => $translations[$qId] ?? $q->teks_pertanyaan,
+                            'score_raw' => round($s, 2),
+                            'score_percentage' => round($s * 20, 2),
+                            'category' => $cat
+                        ];
                     }
-                    
-                    $cat = ($s >= 3.75) ? 'Tinggi' : (($s >= 2.5) ? 'Sedang' : 'Rendah');
-                    $subIndicators[] = [
-                        'question_id' => $qId,
-                        'question_text' => $translations[$qId] ?? $q->teks_pertanyaan,
-                        'score_raw' => round($s, 2),
-                        'score_percentage' => round($s * 20, 2),
-                        'category' => $cat
-                    ];
                 }
+
+                $details[] = [
+                    'id' => $id,
+                    'title' => $meta['title'],
+                    'description' => $meta['desc'],
+                    'score_raw' => round($score, 2),
+                    'score_percentage' => round($score * 20, 2),
+                    'category_label' => ($score >= 3.67) ? 'Baik' : (($score >= 2.34) ? 'Sedang' : 'Kurang'),
+                    'sub_indicators' => $subIndicators
+                ];
             }
+            return $details;
+        });
 
-            $factorsDetails[] = [
-                'id' => $id,
-                'title' => $meta['title'],
-                'description' => $meta['desc'],
-                'score_raw' => round($score, 2),
-                'score_percentage' => round($score * 20, 2),
-                'category_label' => ($score >= 3.67) ? 'Baik' : (($score >= 2.34) ? 'Sedang' : 'Kurang'),
-                'sub_indicators' => $subIndicators
-            ];
-        }
-
-        // Active Assessment Progress Info
+        // Active Assessment Progress Info (Not cached because progress changes frequently when respondents fill)
         $activeAssessment = Assessment::where('id_umkm', $id_umkm)->latest()->first();
         $totalEmployees = User::where('id_umkm', $id_umkm)->where('role', 'employee')->count();
         $employeesFinishedCount = 0;

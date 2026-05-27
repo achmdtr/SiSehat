@@ -11,6 +11,7 @@ use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Cache;
 
 class DashboardController extends Controller
 {
@@ -67,8 +68,6 @@ class DashboardController extends Controller
         $role = $user->role;
 
         // Base Query untuk Assessments
-        // Jika admin, ambil semua data global.
-        // Jika owner/employee, ambil semua data asesmen yang ada di UMKM mereka (kolektif)
         if ($role === 'admin') {
             $assessmentQuery = Assessment::query();
         } else {
@@ -78,19 +77,25 @@ class DashboardController extends Controller
         // Ambil asesmen terbaru untuk UMKM ini (jika bukan admin)
         $latestAssessment = null;
         if ($role !== 'admin') {
-            $latestAssessment = Assessment::where('id_umkm', $user->id_umkm)
-                ->whereIn('status', ['Selesai', 'finished'])
-                ->latest()
-                ->first();
+            $latestAssessment = Cache::remember("umkm_latest_assessment_{$user->id_umkm}", 300, function() use ($user) {
+                return Assessment::where('id_umkm', $user->id_umkm)
+                    ->whereIn('status', ['Selesai', 'finished'])
+                    ->latest()
+                    ->first();
+            });
         }
 
         // Statistik
+        $totalKesehatan = $latestAssessment 
+            ? round($latestAssessment->total_score * 20) 
+            : Cache::remember(($role === 'admin' ? 'global_avg_total_score' : "umkm_avg_total_score_{$user->id_umkm}"), 300, function() use ($assessmentQuery) {
+                return round(((clone $assessmentQuery)->avg('total_score') ?? 0) * 20);
+            });
+
         $stats = [
-            'total_umkm' => Umkm::count(),
-            'total_responden' => Assessment::count(),
-            'total_kesehatan' => $latestAssessment 
-                ? round($latestAssessment->total_score * 20) 
-                : round(((clone $assessmentQuery)->avg('total_score') ?? 0) * 20),
+            'total_umkm' => Cache::remember('global_stats_total_umkm', 600, fn() => Umkm::count()),
+            'total_responden' => Cache::remember('global_stats_total_responden', 600, fn() => Assessment::count()),
+            'total_kesehatan' => $totalKesehatan,
         ];
 
         // Data Radar Chart (Faktor) - Dikalikan 20 agar jadi skala 100
@@ -114,15 +119,18 @@ class DashboardController extends Controller
                 'ect' => $latestAssessment->score_ect,
             ];
         } else {
-            $avgFactors = (clone $assessmentQuery)
-                ->select(
-                    DB::raw('AVG(score_ov) * 20 as ov'),
-                    DB::raw('AVG(score_ldi) * 20 as ldi'),
-                    DB::raw('AVG(score_ins) * 20 as ins'),
-                    DB::raw('AVG(score_ops) * 20 as ops'),
-                    DB::raw('AVG(score_weq) * 20 as weq'),
-                    DB::raw('AVG(score_ect) * 20 as ect')
-                )->first();
+            $cacheKey = ($role === 'admin') ? 'global_avg_factors' : "umkm_avg_factors_{$user->id_umkm}";
+            $avgFactors = Cache::remember($cacheKey, 300, function() use ($assessmentQuery) {
+                return (clone $assessmentQuery)
+                    ->select(
+                        DB::raw('AVG(score_ov) * 20 as ov'),
+                        DB::raw('AVG(score_ldi) * 20 as ldi'),
+                        DB::raw('AVG(score_ins) * 20 as ins'),
+                        DB::raw('AVG(score_ops) * 20 as ops'),
+                        DB::raw('AVG(score_weq) * 20 as weq'),
+                        DB::raw('AVG(score_ect) * 20 as ect')
+                    )->first();
+            });
 
             $data_factors = [
                 round($avgFactors->ov ?? 0),
@@ -144,31 +152,39 @@ class DashboardController extends Controller
         }
 
         // Ranking UMKM (Selalu Global - Dikalikan 20)
-        $top_umkm = Assessment::join('umkm', 'assessments.id_umkm', '=', 'umkm.id_umkm')
-            ->select('umkm.nama_umkm', DB::raw('AVG(total_score) * 20 as total_score'))
-            ->groupBy('umkm.id_umkm', 'umkm.nama_umkm')
-            ->orderByDesc('total_score')
-            ->limit(3)
-            ->get();
+        $top_umkm = Cache::remember('global_top_umkm', 600, function() {
+            return Assessment::join('umkm', 'assessments.id_umkm', '=', 'umkm.id_umkm')
+                ->select('umkm.nama_umkm', DB::raw('AVG(total_score) * 20 as total_score'))
+                ->groupBy('umkm.id_umkm', 'umkm.nama_umkm')
+                ->orderByDesc('total_score')
+                ->limit(3)
+                ->get();
+        });
 
-        $bottom_umkm = Assessment::join('umkm', 'assessments.id_umkm', '=', 'umkm.id_umkm')
-            ->select('umkm.nama_umkm', DB::raw('AVG(total_score) * 20 as total_score'))
-            ->groupBy('umkm.id_umkm', 'umkm.nama_umkm')
-            ->orderBy('total_score')
-            ->limit(3)
-            ->get();
+        $bottom_umkm = Cache::remember('global_bottom_umkm', 600, function() {
+            return Assessment::join('umkm', 'assessments.id_umkm', '=', 'umkm.id_umkm')
+                ->select('umkm.nama_umkm', DB::raw('AVG(total_score) * 20 as total_score'))
+                ->groupBy('umkm.id_umkm', 'umkm.nama_umkm')
+                ->orderBy('total_score')
+                ->limit(3)
+                ->get();
+        });
 
         // Data Industri (Tipe Bisnis)
-        $industryCounts = Umkm::select('industry', DB::raw('count(*) as total'))
-            ->groupBy('industry')
-            ->pluck('total', 'industry')
-            ->toArray();
+        $industryCounts = Cache::remember('global_industry_counts', 600, function() {
+            return Umkm::select('industry', DB::raw('count(*) as total'))
+                ->groupBy('industry')
+                ->pluck('total', 'industry')
+                ->toArray();
+        });
 
         // Data Usia Perusahaan (usia_usaha)
-        $ageCounts = Umkm::select('usia_usaha', DB::raw('count(*) as total'))
-            ->groupBy('usia_usaha')
-            ->pluck('total', 'usia_usaha')
-            ->toArray();
+        $ageCounts = Cache::remember('global_age_counts', 600, function() {
+            return Umkm::select('usia_usaha', DB::raw('count(*) as total'))
+                ->groupBy('usia_usaha')
+                ->pluck('total', 'usia_usaha')
+                ->toArray();
+        });
 
         $data_age = [
             $ageCounts[1] ?? 0,
@@ -191,7 +207,34 @@ class DashboardController extends Controller
         }
 
         // Ambil Insight Dinamis dari tabel Recommendations
-        // 1. Identifikasi faktor terlemah (skala 1-5)
+        $cacheInsightKey = $latestAssessment 
+            ? "umkm_insight_{$user->id_umkm}_{$latestAssessment->id_assessment}"
+            : (($role === 'admin') ? 'global_insight_admin' : "umkm_insight_empty_{$user->id_umkm}");
+
+        $insightText = Cache::remember($cacheInsightKey, 300, function() use ($currentFactors) {
+            $factorAverages = [
+                1 => $currentFactors->ov,
+                2 => $currentFactors->ldi,
+                3 => $currentFactors->ins,
+                4 => $currentFactors->ops,
+                5 => $currentFactors->weq,
+                6 => $currentFactors->ect,
+            ];
+
+            asort($factorAverages);
+            $weakestFactorId = key($factorAverages);
+            $weakestScore = current($factorAverages);
+
+            $recommendation = DB::table('recommendations')
+                ->where('id_factor', $weakestFactorId)
+                ->where('min_score', '<=', $weakestScore)
+                ->where('max_score', '>=', $weakestScore)
+                ->first();
+
+            return $recommendation ? $recommendation->insight_text : 'Fokuslah pada perbaikan faktor-faktor dengan skor terendah untuk meningkatkan efisiensi operasional.';
+        });
+
+        // Hitung weakest factor name untuk label
         $factorAverages = [
             1 => $currentFactors->ov,
             2 => $currentFactors->ldi,
@@ -200,22 +243,9 @@ class DashboardController extends Controller
             5 => $currentFactors->weq,
             6 => $currentFactors->ect,
         ];
-
-        // Temukan ID faktor dengan skor terendah
         asort($factorAverages);
         $weakestFactorId = key($factorAverages);
-        $weakestScore = current($factorAverages);
 
-        // 2. Ambil data rekomendasi berdasarkan skor faktor tersebut
-        $recommendation = DB::table('recommendations')
-            ->where('id_factor', $weakestFactorId)
-            ->where('min_score', '<=', $weakestScore)
-            ->where('max_score', '>=', $weakestScore)
-            ->first();
-
-        $insightText = $recommendation ? $recommendation->insight_text : 'Fokuslah pada perbaikan faktor-faktor dengan skor terendah untuk meningkatkan efisiensi operasional.';
-        
-        // Tambahkan nama faktor ke insight jika perlu
         $factorNames = [
             1 => 'Nilai Organisasi',
             2 => 'Keterlibatan Pemimpin',
@@ -232,7 +262,7 @@ class DashboardController extends Controller
             'insight_kritis' => "<b>⚠️ Insight Kritis ({$weakestFactorName}):</b> " . $insightText,
             'total_responden' => $stats['total_responden'],
             'total_umkm' => $stats['total_umkm'],
-            'faktor_dianalisis' => Factor::count(),
+            'faktor_dianalisis' => Cache::remember('global_stats_factor_count', 600, fn() => Factor::count()),
             'data_radar' => $data_factors,
             'data_factors' => $data_factors,
             'data_tipe_bisnis' => $data_industry,
@@ -251,10 +281,12 @@ class DashboardController extends Controller
         $role = $user->role;
 
         // Ambil hasil dari asesmen TERBARU yang sudah selesai
-        $latest = Assessment::where('id_umkm', $id_umkm)
-            ->whereIn('status', ['Selesai', 'finished'])
-            ->latest()
-            ->first();
+        $latest = Cache::remember("umkm_latest_assessment_{$id_umkm}", 300, function() use ($id_umkm) {
+            return Assessment::where('id_umkm', $id_umkm)
+                ->whereIn('status', ['Selesai', 'finished'])
+                ->latest()
+                ->first();
+        });
 
         $avgFactors = $latest;
         $avgScore = ($latest->total_score ?? 0) * 20;
@@ -326,10 +358,12 @@ class DashboardController extends Controller
         $role = $user->role;
 
         // Ambil hasil dari asesmen TERBARU yang sudah selesai
-        $latest = Assessment::where('id_umkm', $id_umkm)
-            ->whereIn('status', ['Selesai', 'finished'])
-            ->latest()
-            ->first();
+        $latest = Cache::remember("umkm_latest_assessment_{$id_umkm}", 300, function() use ($id_umkm) {
+            return Assessment::where('id_umkm', $id_umkm)
+                ->whereIn('status', ['Selesai', 'finished'])
+                ->latest()
+                ->first();
+        });
 
         if (!$latest) {
             return view('rekomendasi', ['data' => [
@@ -418,6 +452,11 @@ class DashboardController extends Controller
             // Update user's id_umkm agar terhubung dengan UMKM baru
             $user->update(['id_umkm' => $umkm->id_umkm]);
 
+            // Invalidate cache
+            Cache::forget('global_stats_total_umkm');
+            Cache::forget('global_industry_counts');
+            Cache::forget('global_age_counts');
+
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
             return response()->json([
@@ -488,6 +527,15 @@ class DashboardController extends Controller
                     'employee_finished' => false // Set false agar chip status karyawan berubah lagi
                 ]);
             }
+
+            // Invalidate cache
+            Cache::forget("umkm_latest_assessment_{$owner->id_umkm}");
+            Cache::forget("umkm_avg_factors_{$owner->id_umkm}");
+            Cache::forget("umkm_avg_total_score_{$owner->id_umkm}");
+            if ($latestAssessment) {
+                Cache::forget("umkm_insight_{$owner->id_umkm}_{$latestAssessment->id_assessment}");
+            }
+            Cache::forget("umkm_insight_empty_{$owner->id_umkm}");
 
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
@@ -799,6 +847,18 @@ class DashboardController extends Controller
                 ->where('users.role', 'employee')
                 ->distinct('responses.id_user')
                 ->count('responses.id_user');
+
+            // Invalidate cache
+            Cache::forget("umkm_latest_assessment_{$id_umkm}");
+            Cache::forget("umkm_avg_factors_{$id_umkm}");
+            Cache::forget("umkm_avg_total_score_{$id_umkm}");
+            Cache::forget("umkm_insight_{$id_umkm}_{$assessment->id_assessment}");
+            Cache::forget("umkm_insight_empty_{$id_umkm}");
+            Cache::forget('global_stats_total_responden');
+            Cache::forget('global_top_umkm');
+            Cache::forget('global_bottom_umkm');
+            Cache::forget('global_avg_total_score');
+            Cache::forget('global_avg_factors');
 
             return response()->json([
                 'success' => true,

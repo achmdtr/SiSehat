@@ -9,6 +9,7 @@ use App\Models\Assessment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Cache;
 
 class UmkmController extends Controller
 {
@@ -71,6 +72,11 @@ class UmkmController extends Controller
             ]);
 
             $user->update(['id_umkm' => $umkm->id_umkm]);
+
+            // Invalidate cache
+            Cache::forget('global_stats_total_umkm');
+            Cache::forget('global_industry_counts');
+            Cache::forget('global_age_counts');
 
             return response()->json([
                 'success' => true,
@@ -170,6 +176,15 @@ class UmkmController extends Controller
                     'employee_finished' => false
                 ]);
             }
+
+            // Invalidate cache
+            Cache::forget("umkm_latest_assessment_{$owner->id_umkm}");
+            Cache::forget("umkm_avg_factors_{$owner->id_umkm}");
+            Cache::forget("umkm_avg_total_score_{$owner->id_umkm}");
+            if ($latestAssessment) {
+                Cache::forget("umkm_insight_{$owner->id_umkm}_{$latestAssessment->id_assessment}");
+            }
+            Cache::forget("umkm_insight_empty_{$owner->id_umkm}");
 
             return response()->json([
                 'success' => true,
