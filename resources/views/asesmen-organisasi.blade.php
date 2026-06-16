@@ -67,7 +67,7 @@
             transition: 0.3s;
         }
         .profile-card:hover { background-color: #e0e7ff; }
-        .avatar-sidebar { width: 45px; height: 45px; border-radius: 50%; background-color: #0a4ebd; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; overflow: hidden; }
+        .avatar-sidebar { width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; overflow: hidden; }
         .avatar-sidebar img { width: 100%; height: 100%; object-fit: cover; }
 
         .profile-info { flex-grow: 1; text-align: left; }
@@ -348,7 +348,7 @@
 
         <div class="profile-card">
             <div class="avatar-sidebar">
-                <img src="https://i.pravatar.cc/150?u={{ auth()->user()->id ?? 1 }}" alt="Avatar">
+                <img src="{{ asset('images/profil.svg') }}" class="nav-icon">
             </div>
             <div class="profile-info">
                 <h4>{{ auth()->user()->name ?? 'Riski' }}</h4>
