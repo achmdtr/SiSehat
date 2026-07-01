@@ -1,6 +1,7 @@
 *.log
 .DS_Store
 .env
+.env.*
 .env.backup
 .env.production
 .phpactor.json
@@ -24,3 +25,23 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Scratch and Artifact directories
+/scratch/
+/artifacts/
+api_files_list.md
+
+# Temporary and test output files
+*.json
+!composer.json
+!package.json
+!package-lock.json
+
+# Development / utility scripts in root
+/check_*.php
+/fix_*.php
+/hash_*.php
+/list_*.php
+/replace_*.php
+/test_*.php
+/parse_k6.py
