@@ -198,12 +198,47 @@ class DashboardController extends Controller
             $industryCounts[3] ?? 0,
         ];
 
-        // Tentukan status kesehatan berdasarkan skor (skala 100)
-        $status_kesehatan = 'KURANG';
-        if ($stats['total_kesehatan'] >= 75) {
-            $status_kesehatan = 'BAIK';
-        } elseif ($stats['total_kesehatan'] >= 50) {
-            $status_kesehatan = 'CUKUP';
+        // Tentukan status kesehatan berdasarkan kuartil dinamis
+        if ($latestAssessment && $latestAssessment->kategori_kuartil) {
+            $status_kesehatan = strtoupper($latestAssessment->kategori_kuartil);
+        } else {
+            // Hitung posisi kuartil untuk global average jika belum ada asesmen
+            $globalAvgScore = $stats['total_kesehatan'] / 20;
+            
+            $allScores = DB::table('assessments')
+                ->whereNotNull('total_score')
+                ->pluck('total_score')
+                ->toArray();
+                
+            sort($allScores);
+            $count = count($allScores);
+            
+            if ($count > 0) {
+                $pos1 = ($count - 1) * 0.25;
+                $pos3 = ($count - 1) * 0.75;
+                
+                $base1 = floor($pos1);
+                $rest1 = $pos1 - $base1;
+                $q1 = isset($allScores[$base1 + 1]) 
+                    ? $allScores[$base1] + $rest1 * ($allScores[$base1 + 1] - $allScores[$base1]) 
+                    : $allScores[$base1];
+                    
+                $base3 = floor($pos3);
+                $rest3 = $pos3 - $base3;
+                $q3 = isset($allScores[$base3 + 1]) 
+                    ? $allScores[$base3] + $rest3 * ($allScores[$base3 + 1] - $allScores[$base3]) 
+                    : $allScores[$base3];
+
+                if ($globalAvgScore <= $q1) {
+                    $status_kesehatan = 'KURANG';
+                } elseif ($globalAvgScore <= $q3) {
+                    $status_kesehatan = 'CUKUP';
+                } else {
+                    $status_kesehatan = 'BAIK';
+                }
+            } else {
+                $status_kesehatan = 'KURANG';
+            }
         }
 
         // Ambil Insight Dinamis dari tabel Recommendations
@@ -376,10 +411,14 @@ class DashboardController extends Controller
         $avgScore = ($latest->total_score ?? 0) * 20;
         $avgFactors = $latest;
 
-        // Tentukan status berdasarkan skor (skala 100)
+        // Tentukan status berdasarkan kuartil dinamis
         $status = 'KONDISI KURANG';
-        if ($avgScore >= 75) $status = 'KONDISI BAIK';
-        elseif ($avgScore >= 50) $status = 'KONDISI CUKUP';
+        if ($latest && $latest->kategori_kuartil) {
+            $status = 'KONDISI ' . strtoupper($latest->kategori_kuartil);
+        } else {
+            if ($avgScore >= 75) $status = 'KONDISI BAIK';
+            elseif ($avgScore >= 50) $status = 'KONDISI CUKUP';
+        }
 
         $factorsArray = [
             ['name' => 'Nilai Organisasi', 'score' => $avgFactors->score_ov * 20, 'desc' => 'Mempertahankan budaya positif yang selaras dengan visi strategis.'],
@@ -605,6 +644,7 @@ class DashboardController extends Controller
                 return view('asesmen-organisasi', [
                     'sections' => [],
                     'alreadyFinished' => true,
+                    'activeAssessment' => $activeAssessment,
                     'ownerFinished' => $activeAssessment->owner_finished,
                     'employeeFinished' => $activeAssessment->employee_finished,
                     'totalEmployees' => $totalEmployees,
@@ -726,6 +766,9 @@ class DashboardController extends Controller
 
         $subIndicators = [];
         $chartData = [];
+        $tinggiCount = 0;
+        $sedangCount = 0;
+        $rendahCount = 0;
 
         foreach ($questions as $q) {
             $qId = $q->id_question;
@@ -744,12 +787,31 @@ class DashboardController extends Controller
             }
             
             $cat = ($s >= 3.75) ? 'Tinggi' : (($s >= 2.5) ? 'Sedang' : 'Rendah');
+            if ($cat === 'Tinggi') {
+                $tinggiCount++;
+            } elseif ($cat === 'Sedang') {
+                $sedangCount++;
+            } else {
+                $rendahCount++;
+            }
+
             $subIndicators[] = [
                 'name' => $translations[$q->id_question] ?? $q->teks_pertanyaan,
                 'score' => number_format($s, 2),
                 'category' => $cat
             ];
             $chartData[] = round($s, 2);
+        }
+
+        $totalSub = count($subIndicators);
+        if ($totalSub > 0) {
+            $tinggiPct = round(($tinggiCount / $totalSub) * 100);
+            $sedangPct = round(($sedangCount / $totalSub) * 100);
+            $rendahPct = 100 - $tinggiPct - $sedangPct;
+        } else {
+            $tinggiPct = 0;
+            $sedangPct = 0;
+            $rendahPct = 0;
         }
 
         $faktor = [
@@ -760,7 +822,12 @@ class DashboardController extends Controller
             'category_percentage' => round($score * 20),
             'category_label' => ($score >= 3.67) ? 'Baik' : (($score >= 2.34) ? 'Sedang' : 'Kurang'),
             'sub_indicators' => $subIndicators,
-            'chart_data' => $chartData
+            'chart_data' => $chartData,
+            'sub_indicator_distribution' => [
+                'tinggi' => $tinggiPct,
+                'sedang' => $sedangPct,
+                'rendah' => $rendahPct
+            ]
         ];
 
         return view('faktor-detail', compact('faktor'));
@@ -961,6 +1028,10 @@ class DashboardController extends Controller
             abort(404, 'Belum ada data asesmen.');
         }
 
+        // Ambil data UMKM
+        $umkm = DB::table('umkm')->where('id_umkm', $user->id_umkm)->first();
+        $namaUmkm = $umkm ? $umkm->nama_umkm : '-';
+
         // Ambil rata-rata jawaban per pertanyaan
         $responses = DB::table('responses')
             ->where('id_assessment', $assessment->id_assessment)
@@ -969,7 +1040,16 @@ class DashboardController extends Controller
 
         $translations = $this->questionTextTranslations();
 
-        $rows = [];
+        $factorNames = [
+            1 => 'Nilai Organisasi',
+            2 => 'Keterlibatan Pemimpin',
+            3 => 'Sumber Daya Institusi',
+            4 => 'Stabilitas Operasional',
+            5 => 'Kualitas Tempat Kerja',
+            6 => 'Kinerja Ekonomi',
+        ];
+
+        $groupedRows = [];
         $questions = DB::table('questions')->orderBy('id_factor')->orderBy('id_question')->get();
         foreach ($questions as $q) {
             $qid = $q->id_question;
@@ -979,24 +1059,45 @@ class DashboardController extends Controller
             if ($userResponses && $userResponses->isNotEmpty()) {
                 $avg = round($userResponses->avg('nilai'), 2);
                 $count = $userResponses->count();
-                $displayText = "Skor Rata-rata: $avg (dari $count responden)";
+                $displayText = "$avg (dari $count responden)";
             }
 
-            $rows[] = [
+            $factorId = $q->id_factor;
+            $factorName = $factorNames[$factorId] ?? 'Faktor Lain';
+
+            $groupedRows[$factorName][] = [
                 'id' => $qid,
                 'pertanyaan' => $translations[$qid] ?? $q->teks_pertanyaan,
                 'jawaban' => $displayText,
             ];
         }
 
+        // Hitung total skor kesehatan (skala 0-100) dan kategori
+        $skorKesehatan = round(($assessment->total_score ?? 0) * 20);
+        $kategoriKuartil = $assessment->kategori_kuartil ?? 'Cukup';
+
+        // Nilai masing-masing faktor (skala 0-100)
+        $factorScores = [
+            'Nilai Organisasi' => round(($assessment->score_ov ?? 0) * 20, 1),
+            'Keterlibatan Pemimpin' => round(($assessment->score_ldi ?? 0) * 20, 1),
+            'Sumber Daya Institusi' => round(($assessment->score_ins ?? 0) * 20, 1),
+            'Stabilitas Operasional' => round(($assessment->score_ops ?? 0) * 20, 1),
+            'Kualitas Tempat Kerja' => round(($assessment->score_weq ?? 0) * 20, 1),
+            'Kinerja Ekonomi' => round(($assessment->score_ect ?? 0) * 20, 1),
+        ];
+
         $filename = 'Ringkasan_Asesmen_'.preg_replace('/[^A-Za-z0-9_-]+/', '_', $user->nama_user).'_'.date('Y-m-d').'.pdf';
 
         return Pdf::loadView('pdf.asesmen-ringkasan', [
             'nama' => $user->nama_user,
             'peran' => $user->role === 'employee' ? 'Karyawan' : 'Pemilik UMKM',
+            'namaUmkm' => $namaUmkm,
             'tanggalCetak' => now()->format('d/m/Y H:i'),
             'statusAsesmen' => $assessment->status,
-            'rows' => $rows,
+            'skorKesehatan' => $skorKesehatan,
+            'kategoriKuartil' => $kategoriKuartil,
+            'factorScores' => $factorScores,
+            'groupedRows' => $groupedRows,
         ])
             ->setPaper('a4', 'portrait')
             ->download($filename);

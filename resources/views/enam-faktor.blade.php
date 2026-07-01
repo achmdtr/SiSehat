@@ -128,18 +128,54 @@
         .status-card {
             box-shadow: none;
             border: 1px solid #cbd5e1;
+            transition: all 0.3s ease;
+        }
+
+        .status-card.status-success {
+            background-color: #f0fdf4;
+            border-color: #bbf7d0;
+        }
+        .status-card.status-success .icon-circle {
+            background-color: #10b981;
+            color: white;
+        }
+        .status-card.status-success .status-text h3 {
+            color: #047857;
+        }
+
+        .status-card.status-warning {
+            background-color: #fffbeb;
+            border-color: #fde68a;
+        }
+        .status-card.status-warning .icon-circle {
+            background-color: #f59e0b;
+            color: white;
+        }
+        .status-card.status-warning .status-text h3 {
+            color: #b45309;
+        }
+
+        .status-card.status-danger {
+            background-color: #fef2f2;
+            border-color: #fecaca;
+        }
+        .status-card.status-danger .icon-circle {
+            background-color: #ef4444;
+            color: white;
+        }
+        .status-card.status-danger .status-text h3 {
+            color: #b91c1c;
         }
 
         .status-badge-container { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
         .icon-circle { 
             width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;
             box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
         }
-        .icon-circle.warning { background-color: #f59e0b; color: white; }
         
         .status-text h5 { font-size: 12px; color: #64748b; font-weight: 600; margin-bottom: 2px; letter-spacing: 0.3px; }
-        .status-text h3 { font-size: 18px; font-weight: 700; line-height: 1.2; }
-        .status-text h3.warning { color: #f59e0b; }
+        .status-text h3 { font-size: 18px; font-weight: 700; line-height: 1.2; transition: all 0.3s ease; }
         
         .insight-summary h6 { font-size: 14px; color: #0f172a; font-weight: 600; margin-bottom: 10px; }
         .insight-summary p { font-size: 14px; color: #475569; line-height: 1.6; margin-bottom: 0; font-weight: 400; }
@@ -241,7 +277,7 @@
                 <span>Tambah Data UMKM</span>
             </li>
             <li class="nav-item" onclick="window.location='{{ route('dashboard.tambah-karyawan') }}'">
-                <img src="{{ asset('images/Tambah_Data_Karyawan_logo.svg') }}" class="nav-icon" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png'">
+                <img src="{{ asset('images/Tambah_Data_Karyawan_logo.svg') }}" class="nav-icon" style="width: 24px; height: 24px;" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png'">
                 <span>Tambah Data Karyawan</span>
             </li>
             <li class="nav-item" onclick="window.location='{{ route('dashboard.manajemen-umkm') }}'">
@@ -252,7 +288,7 @@
 
         <div class="profile-card">
             <div class="avatar">
-                <img src="{{ asset('images/profil.svg') }}" class="nav-icon">
+                <img src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name ?? 'Riski') }}&background=6366f1&color=fff&bold=true" class="nav-icon">
             </div>
             <div class="profile-info">
                 <h4>{{ auth()->user()->name ?? 'Riski' }}</h4>
@@ -280,7 +316,7 @@
         <div class="content-grid">
             
             <div class="left-column">
-                <div class="card status-card">
+                <div class="card status-card {{ $data['skor_kesehatan'] >= 75 ? 'status-success' : ($data['skor_kesehatan'] >= 50 ? 'status-warning' : 'status-danger') }}">
                     <div class="status-badge-container">
                         <div class="icon-circle {{ $data['skor_kesehatan'] >= 75 ? 'success' : ($data['skor_kesehatan'] >= 50 ? 'warning' : 'danger') }}">
                             @if($data['skor_kesehatan'] >= 75)
@@ -299,7 +335,7 @@
                         </div>
                     </div>
                     <div class="insight-summary">
-                        <h6>Insight Summary</h6>
+                        <h6>Ringkasan</h6>
                         <p>Skor rata-rata kesehatan organisasi Anda adalah <b>{{ $data['skor_kesehatan'] }}%</b>. 
                         @if($data['skor_kesehatan'] < 50)
                             Banyak area yang membutuhkan perbaikan mendesak untuk menjaga keberlangsungan usaha.

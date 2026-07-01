@@ -109,14 +109,14 @@
         .content-area { flex-grow: 1; padding: 30px 40px; overflow-y: auto; scroll-behavior: smooth; display: flex; flex-direction: column; gap: 20px; }
         
         /* Header & Progress Bar */
-        .header-top { display: flex; justify-content: space-between; align-items: flex-start; }
+        .header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
         .header-title-wrapper { display: flex; flex-direction: column; gap: 5px;}
-        .kuesioner-label { font-size: 10px; font-weight: 700; color: #64748b; letter-spacing: 1px; text-transform: uppercase; }
+        .kuesioner-label { font-size: 14px; font-weight: 700; color: #64748b; letter-spacing: 1px; text-transform: uppercase; }
         .header-title-wrapper h1 { font-size: 24px; color: #1e293b; font-weight: 800; }
         .header-title-wrapper p { font-size: 13px; color: #64748b; max-width: 600px; line-height: 1.5; }
         
         .estimasi-waktu { 
-            display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; 
+            display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; 
             color: #475569; border: 1px solid #cbd5e1; padding: 8px 16px; border-radius: 20px; background-color: #ffffff;
         }
 
@@ -129,7 +129,7 @@
         .progress-info { font-size: 12px; color: #64748b; }
 
         /* Main Grid */
-        .asesmen-grid { display: grid; grid-template-columns: 260px 1fr; gap: 25px; align-items: flex-start; }
+        .asesmen-grid { display: grid; grid-template-columns: 260px 1fr; gap: 25px; align-items: flex-start; margin-top: 20px; }
 
         /* Tips Panel */
         .tips-panel { background: transparent; }
@@ -266,7 +266,7 @@
         .role-status-bar {
             display: flex;
             gap: 20px;
-            margin-bottom: 5px;
+            margin-bottom: 20px;
         }
         .role-status-chip {
             display: flex;
@@ -295,6 +295,271 @@
         .completed .status-indicator {
             background: #10b981;
             box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+        }
+
+        /* ================= WELCOME SCREEN ================= */
+        .welcome-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-grow: 1;
+            padding: 40px 0;
+        }
+        .welcome-card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 680px;
+            width: 100%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+            border: 1px solid #e2e8f0;
+            text-align: center;
+        }
+        .welcome-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #eff6ff;
+            color: #2563eb;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 20px;
+        }
+        .welcome-title {
+            font-size: 26px;
+            font-weight: 800;
+            color: #1e293b;
+            margin-bottom: 12px;
+            line-height: 1.3;
+        }
+        .welcome-desc {
+            font-size: 13.5px;
+            color: #64748b;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            max-width: 580px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 35px;
+            text-align: left;
+        }
+        .info-item {
+            background: #f8fafc;
+            border: 1px solid #f1f5f9;
+            border-radius: 12px;
+            padding: 18px;
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+        }
+        .info-icon-box {
+            width: 40px;
+            height: 40px;
+            background: #eef2ff;
+            color: #2563eb;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .info-item-text h5 {
+            font-size: 13.5px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+        .info-item-text p {
+            font-size: 11.5px;
+            color: #64748b;
+            line-height: 1.5;
+        }
+        .btn-start-assessment {
+            background-color: #2563eb;
+            color: #ffffff;
+            border: none;
+            padding: 14px 35px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .btn-start-assessment:hover {
+            background-color: #1d4ed8;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
+        }
+        .btn-start-assessment:active {
+            transform: translateY(0);
+        }
+
+        /* ================= COMPLETED STATE ================= */
+        .assessment-completed-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            width: 100%;
+            animation: fadeIn 0.5s ease-out;
+        }
+        .completed-card {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+            border: 1px solid #f1f5f9;
+            padding: 40px;
+            max-width: 650px;
+            width: 100%;
+            text-align: center;
+        }
+        .completed-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #ecfdf5;
+            color: #10b981;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .completed-title {
+            font-size: 26px;
+            color: #1e293b;
+            font-weight: 800;
+            margin-bottom: 16px;
+            line-height: 1.3;
+        }
+        .completed-desc {
+            font-size: 15px;
+            color: #64748b;
+            line-height: 1.6;
+            margin-bottom: 32px;
+        }
+        .status-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 35px;
+            background: #f8fafc;
+            padding: 24px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            text-align: left;
+        }
+        @media (max-width: 500px) {
+            .status-summary-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .summary-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .summary-label {
+            font-size: 11px;
+            font-weight: 800;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+        .summary-value {
+            font-size: 15px;
+            font-weight: 700;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .summary-value.status-finished {
+            color: #10b981;
+        }
+        .dot-indicator {
+            width: 8px;
+            height: 8px;
+            background-color: #10b981;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse-dot 1.5s infinite;
+        }
+        @keyframes pulse-dot {
+            0% { opacity: 0.4; }
+            50% { opacity: 1; }
+            100% { opacity: 0.4; }
+        }
+        .completed-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+        }
+        @media (max-width: 550px) {
+            .completed-actions {
+                flex-direction: column;
+            }
+        }
+        .btn-completed-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: #2563eb;
+            color: #ffffff;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 14px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        }
+        .btn-completed-primary:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+        }
+        .btn-completed-outline {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: transparent;
+            color: #2563eb;
+            border: 1px solid #2563eb;
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 14px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-completed-outline:hover {
+            background: #eff6ff;
+            transform: translateY(-1px);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
     </style>
@@ -336,7 +601,7 @@
                 <span>Tambah Data UMKM</span>
             </li>
             <li class="nav-item" onclick="window.location='{{ route('dashboard.tambah-karyawan') }}'">
-                <img src="{{ asset('images/Tambah_Data_Karyawan_logo.svg') }}" class="nav-icon" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png'">
+                <img src="{{ asset('images/Tambah_Data_Karyawan_logo.svg') }}" class="nav-icon" style="width: 24px; height: 24px;" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png'">
                 <span>Tambah Data Karyawan</span>
             </li>
             <li class="nav-item" onclick="window.location='{{ route('dashboard.manajemen-umkm') }}'">
@@ -348,7 +613,7 @@
 
         <div class="profile-card">
             <div class="avatar-sidebar">
-                <img src="{{ asset('images/profil.svg') }}" class="nav-icon">
+                <img src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name ?? 'Riski') }}&background=6366f1&color=fff&bold=true" class="nav-icon">
             </div>
             <div class="profile-info">
                 <h4>{{ auth()->user()->name ?? 'Riski' }}</h4>
@@ -372,95 +637,200 @@
         @if(session('info'))
         <div class="flash-info-banner">{{ session('info') }}</div>
         @endif
-        <div class="header-top">
-            <div class="header-title-wrapper">
-                <span class="kuesioner-label">KUESIONER</span>
-                <h1>Asesmen Kesehatan Organisasi</h1>
-                <p>Evaluasi komprehensif terhadap 6 faktor kunci budaya dan operasional perusahaan Anda. Jawablah sesuai dengan kondisi aktual.</p>
-            </div>
-            <div class="estimasi-waktu">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                Estimasi Waktu: 15 Menit
-            </div>
-        </div>
 
-        <div class="role-status-bar">
-            <div id="chipOwner" class="role-status-chip {{ $ownerFinished ? 'completed' : '' }}">
-                <div class="status-indicator"></div>
-                <span id="textOwner">Pemilik: {{ $ownerFinished ? 'Sudah Mengisi' : 'Belum Mengisi' }}</span>
-            </div>
-            @if($totalEmployees > 0)
-            <div id="chipEmployees" class="role-status-chip {{ $employeesFinishedCount >= $totalEmployees ? 'completed' : '' }}">
-                <div class="status-indicator"></div>
-                <span id="textEmployees">Karyawan: {{ $employeesFinishedCount }}/{{ $totalEmployees }} Selesai</span>
-            </div>
-            @endif
-        </div>
+        @if(isset($alreadyFinished) && $alreadyFinished)
+            <!-- Tampilan Halaman Asesmen Sudah Selesai (Dedicated View) -->
+            <div class="assessment-completed-container">
+                <div class="completed-card">
+                    <div class="completed-badge">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                        Asesmen Selesai
+                    </div>
+                    
+                    <h1 class="completed-title">Asesmen Kesehatan Organisasi</h1>
+                    
+                    @if(auth()->user()->role === 'employee')
+                        <p class="completed-desc">
+                            Terima kasih, <strong>{{ auth()->user()->name }}</strong>. Jawaban kuesioner Anda telah berhasil disimpan dan digabungkan dengan asesmen pemilik UMKM untuk penyusunan rekomendasi organisasi.
+                        </p>
+                    @else
+                        <p class="completed-desc">
+                            Terima kasih, <strong>{{ auth()->user()->name }}</strong>. Seluruh data asesmen untuk perusahaan/UMKM Anda telah berhasil disimpan dan sedang dianalisis oleh sistem kami.
+                        </p>
+                    @endif
 
-        <div class="progress-card">
-            <div class="progress-header">
-                <h3>Progres Asesmen</h3>
-                <span class="progress-count" id="progressCount">6 / 18 Pertanyaan Selesai</span>
-            </div>
-            <div class="progress-track">
-                <div class="progress-fill" id="progressBar" style="width: 33.33%;"></div>
-            </div>
-            <div class="progress-info" id="progressInfo">Anda sedang mengisi bagian "Nilai Organisasi"</div>
-        </div>
+                    <div class="status-summary-grid">
+                        <div class="summary-item">
+                            <span class="summary-label">Status Asesmen</span>
+                            <span class="summary-value status-finished">
+                                <span class="dot-indicator"></span> Selesai
+                            </span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Tanggal Pengisian</span>
+                            <span class="summary-value">
+                                {{ \Carbon\Carbon::parse($activeAssessment->finished_at ?? $activeAssessment->updated_at ?? now())->translatedFormat('d F Y') }}
+                            </span>
+                        </div>
+                        @if(auth()->user()->role === 'owner' && isset($totalEmployees) && $totalEmployees > 0)
+                        <div class="summary-item">
+                            <span class="summary-label">Partisipasi Karyawan</span>
+                            <span class="summary-value">
+                                {{ $employeesFinishedCount }} dari {{ $totalEmployees }} Karyawan
+                            </span>
+                        </div>
+                        @endif
+                    </div>
 
-        <div class="asesmen-grid">
-            <div class="tips-panel">
-                @if(auth()->user()->role === 'employee')
-                <div class="tips-card tips-card--karyawan">
-                    <h4 class="petunjuk-judul">Petunjuk Pengisian</h4>
-                    <p class="petunjuk-intro">Evaluasi sejauh mana organisasi Anda mampu mengeksekusi strategi yang telah direncanakan. Pilih skala 1 hingga 5 yang paling mencerminkan kondisi aktual.</p>
-                    <ul class="petunjuk-skala">
-                        <li class="petunjuk-skala-item">
-                            <span class="petunjuk-skala-num">1</span>
-                            <span>Sangat tidak setuju / Tidak pernah dilakukan.</span>
-                        </li>
-                        <li class="petunjuk-skala-item">
-                            <span class="petunjuk-skala-num">2</span>
-                            <span>Tidak setuju / Jarang dilakukan.</span>
-                        </li>
-                        <li class="petunjuk-skala-item">
-                            <span class="petunjuk-skala-num">3</span>
-                            <span>Netral / Kadang dilakukan.</span>
-                        </li>
-                        <li class="petunjuk-skala-item">
-                            <span class="petunjuk-skala-num">4</span>
-                            <span>Setuju / Sering dilakukan.</span>
-                        </li>
-                        <li class="petunjuk-skala-item">
-                            <span class="petunjuk-skala-num">5</span>
-                            <span>Sangat setuju / Selalu konsisten dilakukan.</span>
-                        </li>
-                    </ul>
-                </div>
-                @else
-                <div class="tips-card">
-                    <h4>TIPS PENGISIAN</h4>
-                    <p>Evaluasi sejauh mana organisasi Anda mampu mengeksekusi strategi yang telah direncanakan. Pilih <b>Tidak</b>, <b>Sedang Proses</b>, atau <b>Ya</b> yang di mana merupakan kondisi aktual.</p>
-                </div>
-                @endif
-            </div>
-
-            <div class="questions-box">
-                <div class="q-section-title">
-                    <h2 id="sectionTitle">Nilai Organisasi</h2>
-                    <p id="sectionDesc">Evaluasi sejauh mana usaha anda berjalan.</p>
-                </div>
-
-                <div id="questionsContainer">
-                    <!-- Pertanyaan akan di-render di sini oleh JavaScript -->
-                </div>
-
-                <div class="nav-buttons">
-                    <button class="btn-outline" id="btnBack" style="visibility: hidden;">Kembali</button>
-                    <button class="btn-primary" id="btnNext">Lanjut ke Kinerja Ekonomi →</button>
+                    <div class="completed-actions">
+                        <a href="{{ route('dashboard') }}" class="btn-completed-primary">
+                            Kembali ke Beranda
+                        </a>
+                        <a href="{{ route('dashboard.asesmen-ringkasan-pdf') }}" class="btn-completed-outline" target="_blank" rel="noopener noreferrer">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            Unduh Ringkasan (PDF)
+                        </a>
+                    </div>
                 </div>
             </div>
-        </div>
+        @else
+            @php
+                $showWelcome = isset($sections) && count($sections) > 0;
+            @endphp
+
+            <!-- Welcome / Confirmation Screen -->
+            <div id="welcomeContainer" class="welcome-container" style="{{ $showWelcome ? 'display: flex;' : 'display: none;' }}">
+                <div class="welcome-card">
+                    <div class="welcome-badge">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path><path d="m9 12 2 2 4-4"></path></svg>
+                        Siap Memulai
+                    </div>
+                    <h1 class="welcome-title">Asesmen Kesehatan Organisasi</h1>
+                    <p class="welcome-desc">
+                        Evaluasi komprehensif terhadap 6 faktor kunci budaya dan operasional perusahaan Anda. Jawaban Anda akan membantu kami menyusun rekomendasi kesehatan organisasi yang tepat dan akurat.
+                    </p>
+
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-icon-box">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            </div>
+                            <div class="info-item-text">
+                                <h5>Estimasi Waktu</h5>
+                                <p>Memerlukan waktu sekitar 15 menit untuk menyelesaikan seluruh pertanyaan.</p>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon-box">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+                            </div>
+                            <div class="info-item-text">
+                                <h5>6 Faktor Evaluasi</h5>
+                                <p>Nilai organisasi, kinerja ekonomi, lingkungan kerja, kepemimpinan, kepuasan kerja, & manajemen.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn-start-assessment" id="btnStartAssessment">
+                        Mulai Asesmen Sekarang
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Actual Assessment Content -->
+            <div id="assessmentContent" style="{{ !$showWelcome ? 'display: block;' : 'display: none;' }}">
+                <div class="header-top">
+                    <div class="header-title-wrapper">
+                        <span class="kuesioner-label">KUESIONER</span>
+                        <h1>Asesmen Kesehatan Organisasi</h1>
+                        <p>Evaluasi komprehensif terhadap 6 faktor kunci budaya dan operasional perusahaan Anda. Jawablah sesuai dengan kondisi aktual.</p>
+                    </div>
+                    <div class="estimasi-waktu">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        Estimasi Waktu: 15 Menit
+                    </div>
+                </div>
+
+                <div class="role-status-bar">
+                    <div id="chipOwner" class="role-status-chip {{ $ownerFinished ? 'completed' : '' }}">
+                        <div class="status-indicator"></div>
+                        <span id="textOwner">Pemilik: {{ $ownerFinished ? 'Sudah Mengisi' : 'Belum Mengisi' }}</span>
+                    </div>
+                    @if(isset($totalEmployees) && $totalEmployees > 0)
+                    <div id="chipEmployees" class="role-status-chip {{ $employeesFinishedCount >= $totalEmployees ? 'completed' : '' }}">
+                        <div class="status-indicator"></div>
+                        <span id="textEmployees">Karyawan: {{ $employeesFinishedCount }}/{{ $totalEmployees }} Selesai</span>
+                    </div>
+                    @endif
+                </div>
+
+                <div class="progress-card">
+                    <div class="progress-header">
+                        <h3>Progres Asesmen</h3>
+                        <span class="progress-count" id="progressCount">6 / 18 Pertanyaan Selesai</span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-fill" id="progressBar" style="width: 33.33%;"></div>
+                    </div>
+                    <div class="progress-info" id="progressInfo">Anda sedang mengisi bagian "Nilai Organisasi"</div>
+                </div>
+
+                <div class="asesmen-grid">
+                    <div class="tips-panel">
+                        @if(auth()->user()->role === 'employee')
+                        <div class="tips-card tips-card--karyawan">
+                            <h4 class="petunjuk-judul">Petunjuk Pengisian</h4>
+                            <p class="petunjuk-intro">Evaluasi sejauh mana organisasi Anda mampu mengeksekusi strategi yang telah direncanakan. Pilih skala 1 hingga 5 yang paling mencerminkan kondisi aktual.</p>
+                            <ul class="petunjuk-skala">
+                                <li class="petunjuk-skala-item">
+                                    <span class="petunjuk-skala-num">1</span>
+                                    <span>Sangat tidak setuju / Tidak pernah dilakukan.</span>
+                                </li>
+                                <li class="petunjuk-skala-item">
+                                    <span class="petunjuk-skala-num">2</span>
+                                    <span>Tidak setuju / Jarang dilakukan.</span>
+                                </li>
+                                <li class="petunjuk-skala-item">
+                                    <span class="petunjuk-skala-num">3</span>
+                                    <span>Netral / Kadang dilakukan.</span>
+                                </li>
+                                <li class="petunjuk-skala-item">
+                                    <span class="petunjuk-skala-num">4</span>
+                                    <span>Setuju / Sering dilakukan.</span>
+                                </li>
+                                <li class="petunjuk-skala-item">
+                                    <span class="petunjuk-skala-num">5</span>
+                                    <span>Sangat setuju / Selalu konsisten dilakukan.</span>
+                                </li>
+                            </ul>
+                        </div>
+                        @else
+                        <div class="tips-card">
+                            <h4>TIPS PENGISIAN</h4>
+                            <p>Evaluasi sejauh mana organisasi Anda mampu mengeksekusi strategi yang telah direncanakan. Pilih <b>Tidak</b>, <b>Sedang Proses</b>, atau <b>Ya</b> yang di mana merupakan kondisi aktual.</p>
+                        </div>
+                        @endif
+                    </div>
+
+                    <div class="questions-box">
+                        <div class="q-section-title">
+                            <h2 id="sectionTitle">Nilai Organisasi</h2>
+                            <p id="sectionDesc">Evaluasi sejauh mana usaha anda berjalan.</p>
+                        </div>
+
+                        <div id="questionsContainer">
+                            <!-- Pertanyaan akan di-render di sini oleh JavaScript -->
+                        </div>
+
+                        <div class="nav-buttons">
+                            <button class="btn-outline" id="btnBack" style="visibility: hidden;">Kembali</button>
+                            <button class="btn-primary" id="btnNext">Lanjut ke Kinerja Ekonomi →</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
     </div>
 
     <!-- Modal Popup Selesai -->
@@ -511,11 +881,8 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            @if(isset($alreadyFinished) && $alreadyFinished)
-                document.getElementById('successModal').classList.add('active');
-            @endif
 
-            const startTime = new Date(); // Catat waktu mulai
+            let startTime = new Date(); // Catat waktu mulai default
             const sections = @json($sections);
             const totalQuestions = sections.reduce((acc, s) => acc + s.questions.length, 0);
 
@@ -532,6 +899,19 @@
             const progressBar = document.getElementById('progressBar');
             const progressInfo = document.getElementById('progressInfo');
             const modal = document.getElementById('successModal');
+
+            // Welcome Elements
+            const welcomeContainer = document.getElementById('welcomeContainer');
+            const assessmentContent = document.getElementById('assessmentContent');
+            const btnStartAssessment = document.getElementById('btnStartAssessment');
+
+            if (btnStartAssessment) {
+                btnStartAssessment.addEventListener('click', function() {
+                    if (welcomeContainer) welcomeContainer.style.display = 'none';
+                    if (assessmentContent) assessmentContent.style.display = 'block';
+                    startTime = new Date(); // Reset waktu mulai saat benar-benar mulai mengisi
+                });
+            }
 
             function updateProgress() {
                 const answeredCount = Object.keys(answers).length;

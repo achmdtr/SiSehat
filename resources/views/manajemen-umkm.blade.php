@@ -168,7 +168,7 @@
             </li>
             @endif
               <li class="nav-item" onclick="window.location='{{ route('dashboard.tambah-karyawan') }}'">
-                <img src="{{ asset('images/Tambah_Data_Karyawan_logo.svg') }}" class="nav-icon" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png'">
+                <img src="{{ asset('images/Tambah_Data_Karyawan_logo.svg') }}" class="nav-icon" style="width: 24px; height: 24px;" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png'">
                 <span>Tambah Data Karyawan</span>
             </li>
             @if(auth()->user()->role !== 'employee')
@@ -181,7 +181,7 @@
 
         <div class="profile-card">
             <div class="avatar">
-                <img src="{{ asset('images/profil.svg') }}" class="nav-icon">
+                <img src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name ?? 'Riski') }}&background=6366f1&color=fff&bold=true" class="nav-icon">
             </div>
             <div class="profile-info">
                 <h4>{{ auth()->user()->name ?? 'Riski' }}</h4>

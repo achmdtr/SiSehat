@@ -114,7 +114,7 @@
         .form-row { display: flex; gap: 20px; margin-bottom: 20px; }
         .form-row .form-group { flex: 1; margin-bottom: 0; }
         
-        label, .label-title { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 8px; }
+        label, .label-title { display: block; font-size: 14px; font-weight: 600; color: #475569; margin-bottom: 8px; }
         input[type="text"], input[type="password"], input[type="number"] {
             width: 100%; padding: 12px 15px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none;
         }
@@ -132,7 +132,12 @@
 
         .radio-group { display: flex; gap: 20px; align-items: center; height: 45px; }
         .radio-option { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #475569; cursor: pointer; }
-        .radio-option input[type="radio"] { accent-color: #2563eb; }
+        .radio-option input[type="radio"] { 
+            accent-color: #2563eb; 
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
 
         .btn-submit { 
             background-color: #2563eb; color: white; border: none; padding: 12px 30px; 
@@ -140,25 +145,71 @@
         }
         .btn-submit:hover { background-color: #1d4ed8; }
 
-        /* --- INFO SECTION (KANAN) --- */
+        /* Card Akses Tersentralisasi */
         .info-card-main {
-            background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.8)), url('{{ asset("images/Akses_Tersentralisasi_2.jpg") }}');
-            background-size: cover; background-position: center;
-            height: 350px; border-radius: 20px; padding: 30px; color: white;
-            display: flex; flex-direction: column; justify-content: flex-end;
+            background: linear-gradient(135deg, #0d47a1 0%, #1565c0 40%, #1e88e5 100%);
+            border-radius: 16px;
+            overflow: hidden;
+            padding: 30px;
+            color: white;
+            position: relative;
+            box-shadow: 0 8px 25px rgba(13, 71, 161, 0.25);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
             margin-bottom: 20px;
         }
-        .icon-shield-large { width: 32px; height: 32px; background-color: rgba(255,255,255,0.2); border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-bottom: 15px; }
-        .info-content h3 { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
-        .info-content p { font-size: 12px; line-height: 1.6; color: #cbd5e1; }
-
-        .security-card {
-            background-color: #ffffff; border-radius: 12px; padding: 20px; border: 1px solid #f1f5f9;
-            display: flex; gap: 15px; align-items: center;
+        .info-card-main:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(13, 71, 161, 0.35);
         }
-        .icon-shield-small { width: 36px; height: 36px; border-radius: 50%; background-color: #eef2ff; color: #10b981; display: flex; justify-content: center; align-items: center; flex-shrink: 0; }
-        .sec-text h5 { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
-        .sec-text p { font-size: 11px; color: #64748b; }
+        .info-card-main::before {
+            content: '';
+            position: absolute;
+            top: -40px; right: -40px;
+            width: 180px; height: 180px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.07);
+        }
+        .info-card-main::after {
+            content: '';
+            position: absolute;
+            bottom: -60px; right: 40px;
+            width: 140px; height: 140px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .info-content {
+            position: relative;
+            z-index: 2;
+        }
+        .icon-shield-large {
+            width: 44px; height: 44px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 12px;
+            display: flex; justify-content: center; align-items: center;
+            margin-bottom: 18px;
+            backdrop-filter: blur(4px);
+        }
+        .info-content h3 { font-size: 18px; font-weight: 700; color: #ffffff; margin-bottom: 12px; }
+        .info-content p { font-size: 13px; line-height: 1.7; color: rgba(255, 255, 255, 0.8); }
+
+        .info-features {
+            display: flex; flex-direction: column; gap: 10px;
+            margin-top: 20px; padding-top: 18px;
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .info-feature-item {
+            display: flex; align-items: center; gap: 10px;
+            font-size: 12px; color: rgba(255, 255, 255, 0.9); font-weight: 500;
+        }
+        .info-feature-icon {
+            width: 24px; height: 24px; border-radius: 6px;
+            background: rgba(255, 255, 255, 0.12);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+
 
         /* ================= POP-UP MODAL ================= */
         .modal-overlay {
@@ -256,7 +307,7 @@
             </li>
             @endif
               <li class="nav-item active">
-                <img src="{{ asset('images/Tambah_Data_Karyawan_logo.svg') }}" class="nav-icon">
+                <img src="{{ asset('images/Tambah_Data_Karyawan_logo.svg') }}" class="nav-icon" style="width: 24px; height: 24px;">
                 <span>Tambah Data Karyawan</span>
             </li>
             @if(auth()->user()->role !== 'employee')
@@ -269,7 +320,7 @@
 
         <div class="profile-card">
             <div class="avatar">
-                <img src="{{ asset('images/profil.svg') }}" class="nav-icon">
+                <img src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name ?? 'Riski') }}&background=6366f1&color=fff&bold=true" class="nav-icon">
             </div>
             <div class="profile-info">
                 <h4>{{ auth()->user()->name ?? 'Riski' }}</h4>
@@ -346,25 +397,33 @@
                 <div class="info-card-main">
                     <div class="info-content">
                         <div class="icon-shield-large">
-                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
                         </div>
                         <h3>Akses Tersentralisasi</h3>
                         <p>Membangun ekosistem data yang terstruktur. Pastikan data profil karyawan diisi dengan akurat untuk keperluan pelaporan kesehatan klinis.</p>
+                        <div class="info-features">
+                            <div class="info-feature-item">
+                                <div class="info-feature-icon">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                </div>
+                                <span>Monitoring data real-time</span>
+                            </div>
+                            <div class="info-feature-item">
+                                <div class="info-feature-icon">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                </div>
+                                <span>Terintegrasi satu platform</span>
+                            </div>
+                            <div class="info-feature-item">
+                                <div class="info-feature-icon">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                </div>
+                                <span>Analisis keputusan akurat</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="security-card">
-                    <div class="icon-shield-small">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                            <path d="M9 12l2 2 4-4"></path>
-                        </svg>
-                    </div>
-                    <div class="sec-text">
-                        <h5>Status Keamanan Data</h5>
-                        <p>Seluruh data yang diinput terenkripsi end-to-end sesuai dengan standar kepatuhan medis.</p>
-                        </div>
-                </div>
             </div>
         </div>
     </div>

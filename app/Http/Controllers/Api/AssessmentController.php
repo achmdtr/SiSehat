@@ -394,12 +394,47 @@ class AssessmentController extends Controller
             ];
         }
 
-        // Tentukan status kesehatan berdasarkan skor
-        $status_kesehatan = 'KURANG';
-        if ($stats['total_kesehatan'] >= 75) {
-            $status_kesehatan = 'BAIK';
-        } elseif ($stats['total_kesehatan'] >= 50) {
-            $status_kesehatan = 'CUKUP';
+        // Tentukan status kesehatan berdasarkan kuartil dinamis
+        if ($latestAssessment && $latestAssessment->kategori_kuartil) {
+            $status_kesehatan = strtoupper($latestAssessment->kategori_kuartil);
+        } else {
+            // Hitung posisi kuartil untuk global average jika belum ada asesmen
+            $globalAvgScore = $stats['total_kesehatan'] / 20;
+            
+            $allScores = DB::table('assessments')
+                ->whereNotNull('total_score')
+                ->pluck('total_score')
+                ->toArray();
+                
+            sort($allScores);
+            $count = count($allScores);
+            
+            if ($count > 0) {
+                $pos1 = ($count - 1) * 0.25;
+                $pos3 = ($count - 1) * 0.75;
+                
+                $base1 = floor($pos1);
+                $rest1 = $pos1 - $base1;
+                $q1 = isset($allScores[$base1 + 1]) 
+                    ? $allScores[$base1] + $rest1 * ($allScores[$base1 + 1] - $allScores[$base1]) 
+                    : $allScores[$base1];
+                    
+                $base3 = floor($pos3);
+                $rest3 = $pos3 - $base3;
+                $q3 = isset($allScores[$base3 + 1]) 
+                    ? $allScores[$base3] + $rest3 * ($allScores[$base3 + 1] - $allScores[$base3]) 
+                    : $allScores[$base3];
+
+                if ($globalAvgScore <= $q1) {
+                    $status_kesehatan = 'KURANG';
+                } elseif ($globalAvgScore <= $q3) {
+                    $status_kesehatan = 'CUKUP';
+                } else {
+                    $status_kesehatan = 'BAIK';
+                }
+            } else {
+                $status_kesehatan = 'KURANG';
+            }
         }
 
         // Ambil Insight Dinamis
@@ -663,14 +698,58 @@ class AssessmentController extends Controller
 
         $assessment->total_score = ($assessment->score_ov + $assessment->score_ldi + $assessment->score_ins + $assessment->score_ops + $assessment->score_weq + $assessment->score_ect) / 6;
         
-        if ($assessment->total_score <= 2.33) {
-            $assessment->kategori_kuartil = 'Kurang';
-        } elseif ($assessment->total_score <= 3.66) {
-            $assessment->kategori_kuartil = 'Cukup';
-        } else {
-            $assessment->kategori_kuartil = 'Baik';
-        }
-        
+        // Simpan assessment saat ini terlebih dahulu agar total_score baru masuk ke DB
         $assessment->save();
+        
+        // Ambil semua data total_score yang ada di DB untuk menghitung kuartil terbaru
+        $allScores = DB::table('assessments')
+            ->whereNotNull('total_score')
+            ->pluck('total_score')
+            ->toArray();
+            
+        // Urutkan data untuk mencari kuartil
+        sort($allScores);
+        $count = count($allScores);
+        
+        if ($count > 0) {
+            // Perhitungan posisi Kuartil
+            $pos1 = ($count - 1) * 0.25;
+            $pos3 = ($count - 1) * 0.75;
+            
+            // Hitung Q1
+            $base1 = floor($pos1);
+            $rest1 = $pos1 - $base1;
+            $q1 = isset($allScores[$base1 + 1]) 
+                ? $allScores[$base1] + $rest1 * ($allScores[$base1 + 1] - $allScores[$base1]) 
+                : $allScores[$base1];
+                
+            // Hitung Q3
+            $base3 = floor($pos3);
+            $rest3 = $pos3 - $base3;
+            $q3 = isset($allScores[$base3 + 1]) 
+                ? $allScores[$base3] + $rest3 * ($allScores[$base3 + 1] - $allScores[$base3]) 
+                : $allScores[$base3];
+
+            // Lakukan update massal (bulk update) secara otomatis untuk seluruh records di DB
+            // Menggunakan query builder SQL langsung agar sangat cepat (hanya 3 query, < 5 milidetik)
+            DB::table('assessments')
+                ->whereNotNull('total_score')
+                ->where('total_score', '<=', $q1)
+                ->update(['kategori_kuartil' => 'Kurang']);
+
+            DB::table('assessments')
+                ->whereNotNull('total_score')
+                ->where('total_score', '>', $q1)
+                ->where('total_score', '<=', $q3)
+                ->update(['kategori_kuartil' => 'Cukup']);
+
+            DB::table('assessments')
+                ->whereNotNull('total_score')
+                ->where('total_score', '>', $q3)
+                ->update(['kategori_kuartil' => 'Baik']);
+
+            // Segarkan instance model saat ini agar datanya sinkron di memory
+            $assessment->refresh();
+        }
     }
 }

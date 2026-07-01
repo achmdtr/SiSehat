@@ -98,26 +98,56 @@
         }
 
         /* ================= MAIN CONTENT ================= */
-        .content-area { flex-grow: 1; padding: 40px; overflow-y: auto; scroll-behavior: smooth; }
+        .content-area { flex-grow: 1; padding: 30px 35px; overflow-y: auto; scroll-behavior: smooth; }
         
-        .page-header { margin-bottom: 30px; display: flex; flex-direction: column; gap: 8px; }
-        .page-header h1 { font-size: 28px; color: #1e293b; font-weight: 800; margin-bottom: 4px; }
-        .page-header p { color: #64748b; font-size: 14px; line-height: 1.5; max-width: 800px; }
+        .page-header { margin-bottom: 20px; display: flex; flex-direction: column; gap: 5px; }
+        .page-header h1 { font-size: 24px; color: #1e293b; font-weight: 800; margin-bottom: 2px; }
+        .page-header p { color: #64748b; font-size: 13px; line-height: 1.5; max-width: 800px; }
 
-        .back-link { font-size: 13px; color: #1d4ed8; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; margin-bottom: 15px; font-weight: 600; }
-        .back-link:hover { text-decoration: underline; }
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #1d4ed8;
+            background-color: #eef2ff;
+            border: 1px solid #c7d2fe;
+            border-radius: 10px;
+            text-decoration: none;
+            margin-bottom: 20px;
+            transition: all 0.25s ease;
+            cursor: pointer;
+        }
+        .back-btn:hover {
+            background-color: #dbeafe;
+            border-color: #93b4fd;
+            box-shadow: 0 2px 8px rgba(29, 78, 216, 0.12);
+            transform: translateX(-3px);
+        }
+        .back-btn svg {
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+            transition: transform 0.25s ease;
+            flex-shrink: 0;
+        }
+        .back-btn:hover svg {
+            transform: translateX(-2px);
+        }
 
         /* Summary Box */
         .summary-box {
             background-color: #ffffff;
             border-radius: 12px;
-            padding: 30px;
+            padding: 22px 25px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
             display: flex;
             justify-content: space-between;
-            align-items: stretch; /* Make children stretch to equal height */
-            gap: 30px;
-            margin-bottom: 30px;
+            align-items: stretch;
+            gap: 20px;
+            margin-bottom: 22px;
         }
 
         .summary-left {
@@ -131,11 +161,11 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
         }
 
         .summary-title-wrapper h2 {
-            font-size: 20px;
+            font-size: 17px;
             font-weight: 800;
             color: #0f172a;
         }
@@ -158,14 +188,14 @@
 
         .summary-right {
             background-color: #fffbeb;
-            border-radius: 12px;
-            padding: 20px 30px;
+            border-radius: 10px;
+            padding: 16px 24px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            min-width: 180px;
-            flex-shrink: 0; /* Prevent shrinking */
+            min-width: 160px;
+            flex-shrink: 0;
         }
 
         .score-label {
@@ -178,7 +208,7 @@
         }
 
         .score-value {
-            font-size: 32px;
+            font-size: 28px;
             font-weight: 900;
             color: #0f172a;
             display: flex;
@@ -195,39 +225,42 @@
         /* Chart Grid Layout */
         .chart-grid {
             display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 25px;
-            margin-bottom: 30px;
+            grid-template-columns: 3fr 2fr;
+            gap: 20px;
+            margin-bottom: 22px;
         }
 
         .card { 
             background: #ffffff; 
             border-radius: 12px; 
-            padding: 25px; 
+            padding: 20px; 
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); 
             border: none;
+            display: flex;
+            flex-direction: column;
         }
 
         .card-title {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 800;
             color: #0f172a;
-            margin-bottom: 20px;
+            margin-bottom: 12px;
         }
 
         .donut-container {
             position: relative;
-            height: 220px;
+            height: 180px;
             display: flex;
             justify-content: center;
             align-items: center;
+            flex: 1;
         }
 
         .legend-container {
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            margin-top: 20px;
+            gap: 6px;
+            margin-top: 14px;
         }
 
         .legend-item {
@@ -261,12 +294,12 @@
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
             overflow: hidden;
-            margin-bottom: 40px;
+            margin-bottom: 20px;
         }
 
         .table-header {
             background-color: #f8fafc;
-            padding: 20px 25px;
+            padding: 16px 22px;
             border-bottom: 1px solid #e2e8f0;
         }
 
@@ -277,7 +310,7 @@
 
         th {
             text-align: left;
-            padding: 15px 25px;
+            padding: 12px 22px;
             font-size: 11px;
             color: #64748b;
             font-weight: 700;
@@ -287,7 +320,7 @@
         }
 
         td {
-            padding: 15px 25px;
+            padding: 12px 22px;
             font-size: 13px;
             color: #334155;
             border-bottom: 1px solid #e2e8f0;
@@ -343,7 +376,7 @@
                 <span>Tambah Data UMKM</span>
             </li>
             <li class="nav-item" onclick="window.location='{{ route('dashboard.tambah-karyawan') }}'">
-                <img src="{{ asset('images/Tambah_Data_Karyawan_logo.svg') }}" class="nav-icon" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png'">
+                <img src="{{ asset('images/Tambah_Data_Karyawan_logo.svg') }}" class="nav-icon" style="width: 24px; height: 24px;" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png'">
                 <span>Tambah Data Karyawan</span>
             </li>
             <li class="nav-item" onclick="window.location='{{ route('dashboard.manajemen-umkm') }}'">
@@ -354,7 +387,7 @@
 
         <div class="profile-card">
             <div class="avatar">
-                <img src="{{ asset('images/profil.svg') }}" class="nav-icon">
+                <img src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name ?? 'Riski') }}&background=6366f1&color=fff&bold=true" class="nav-icon">
             </div>
             <div class="profile-info">
                 <h4>{{ auth()->user()->name ?? 'Riski' }}</h4>
@@ -374,7 +407,12 @@
     </div>
 
     <div class="content-area">
-        <a href="{{ route('dashboard.faktor') }}" class="back-link">← Kembali ke 6 Faktor Penilaian</a>
+        <a href="{{ route('dashboard.faktor') }}" class="back-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            Kembali ke 6 Faktor Penilaian
+        </a>
         
         <div class="page-header">
             <h1>{{ $faktor['title'] }}</h1>
@@ -398,14 +436,14 @@
         <div class="chart-grid">
             <div class="card">
                 <h3 class="card-title">Distribusi Jawaban per Sub-Indikator</h3>
-                <div style="position: relative; height: 250px; width: 100%;">
+                <div style="position: relative; height: 280px; width: 100%; flex: 1;">
                     <canvas id="barChart"></canvas>
                 </div>
             </div>
             
             <div class="card">
                 <h3 class="card-title">Kategori Kesehatan Faktor</h3>
-                <p style="font-size: 11px; color: #64748b; margin-top: -15px; margin-bottom: 20px;">Berdasarkan agregat nyawa responden</p>
+                <p style="font-size: 11px; color: #64748b; margin-top: -8px; margin-bottom: 10px;">Berdasarkan kategori sub-indikator</p>
                 <div class="donut-container">
                     <canvas id="donutChart"></canvas>
                     <!-- Center text -->
@@ -417,16 +455,16 @@
                 
                 <div class="legend-container">
                     <div class="legend-item">
-                        <div class="legend-left"><div class="legend-dot" style="background-color: #059669;"></div> Tinggi (Baik)</div>
-                        <div class="legend-value">{{ $faktor['category_percentage'] }}%</div>
+                        <div class="legend-left"><div class="legend-dot" style="background-color: #10B981;"></div> Tinggi (Baik)</div>
+                        <div class="legend-value">{{ $faktor['sub_indicator_distribution']['tinggi'] }}%</div>
                     </div>
                     <div class="legend-item">
-                        <div class="legend-left"><div class="legend-dot" style="background-color: #d97706;"></div> Sedang</div>
-                        <div class="legend-value">{{ max(0, 100 - $faktor['category_percentage'] - 10) }}%</div>
+                        <div class="legend-left"><div class="legend-dot" style="background-color: #F59E0B;"></div> Sedang</div>
+                        <div class="legend-value">{{ $faktor['sub_indicator_distribution']['sedang'] }}%</div>
                     </div>
                     <div class="legend-item">
-                        <div class="legend-left"><div class="legend-dot" style="background-color: #dc2626;"></div> Rendah</div>
-                        <div class="legend-value">10%</div>
+                        <div class="legend-left"><div class="legend-dot" style="background-color: #EF4444;"></div> Rendah</div>
+                        <div class="legend-value">{{ $faktor['sub_indicator_distribution']['rendah'] }}%</div>
                     </div>
                 </div>
             </div>
@@ -460,7 +498,7 @@
             </table>
         </div>
         
-        <div style="height: 40px;"></div>
+        <div style="height: 20px;"></div>
     </div>
 
     <script>
@@ -474,9 +512,9 @@
             // Map scores to colors and heights
             // Max height is 5
             const backgroundColors = chartData.map(score => {
-                if(score >= 4.0) return '#34a853'; // Green
-                if(score >= 3.0) return '#fbbc04'; // Yellow
-                return '#ea4335'; // Red
+                if(score >= 3.75) return '#10B981'; // Green (Tinggi)
+                if(score >= 2.5) return '#F59E0B'; // Orange (Sedang)
+                return '#EF4444'; // Red (Rendah)
             });
 
             // Calculate remaining values for the gray background bars
@@ -552,17 +590,17 @@
 
             // Donut Chart
             const ctxDonut = document.getElementById('donutChart').getContext('2d');
-            const pct = {{ $faktor['category_percentage'] }};
-            const rem1 = 100 - pct - 12;
-            const rem2 = 12;
+            const tinggiPct = {{ $faktor['sub_indicator_distribution']['tinggi'] }};
+            const sedangPct = {{ $faktor['sub_indicator_distribution']['sedang'] }};
+            const rendahPct = {{ $faktor['sub_indicator_distribution']['rendah'] }};
 
             new Chart(ctxDonut, {
                 type: 'doughnut',
                 data: {
                     labels: ['Tinggi', 'Sedang', 'Rendah'],
                     datasets: [{
-                        data: [pct, rem1, rem2],
-                        backgroundColor: ['#059669', '#d97706', '#dc2626'],
+                        data: [tinggiPct, sedangPct, rendahPct],
+                        backgroundColor: ['#10B981', '#F59E0B', '#EF4444'],
                         borderWidth: 0,
                         cutout: '75%'
                     }]

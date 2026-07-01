@@ -248,7 +248,7 @@
                 <span>Tambah Data UMKM</span>
             </li>
             <li class="nav-item" onclick="window.location='{{ route('dashboard.tambah-karyawan') }}'">
-                <img src="{{ asset('images/Tambah_Data_Karyawan_logo.svg') }}" class="nav-icon" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png'">
+                <img src="{{ asset('images/Tambah_Data_Karyawan_logo.svg') }}" class="nav-icon" style="width: 24px; height: 24px;" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3135/3135715.png'">
                 <span>Tambah Data Karyawan</span>
             </li>
             <li class="nav-item" onclick="window.location='{{ route('dashboard.manajemen-umkm') }}'">
@@ -259,7 +259,7 @@
 
         <div class="profile-card">
             <div class="avatar">
-                <img src="{{ asset('images/profil.svg') }}" class="nav-icon">
+                <img src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name ?? 'Riski') }}&background=6366f1&color=fff&bold=true" class="nav-icon">
             </div>
             <div class="profile-info">
                 <h4>{{ auth()->user()->name ?? 'Riski' }}</h4>
@@ -358,7 +358,92 @@
 
         </div>
 
+        <h3 class="section-title" style="margin-top: 40px;">Rencana Tindakan Strategis</h3>
         
+        <div class="action-plan-box" style="background: white; border-radius: 12px; border: 1px solid #cbd5e1; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 30px;">
+            <div style="margin-bottom: 20px;">
+                <h4 style="font-size: 16px; font-weight: 800; color: #0f172a; margin-bottom: 8px;">Peta Jalan Perbaikan Operasional (Action Roadmap)</h4>
+                <p style="font-size: 13px; color: #64748b;">Langkah konkret jangka pendek dan menengah yang disesuaikan dengan kondisi kesehatan organisasi Anda saat ini.</p>
+            </div>
+            
+            <div class="action-steps" style="display: flex; flex-direction: column; gap: 20px;">
+                @php
+                    // Map of actions based on factor name and score level (Low: < 50, Mid: 50-74, High: >= 75)
+                    $actionMap = [
+                        'Nilai Organisasi' => [
+                            'low' => 'Rumuskan nilai-nilai dasar perusahaan secara tertulis dan komunikasikan secara intensif kepada seluruh tim sebagai panduan perilaku kerja sehari-hari.',
+                            'mid' => 'Sosialisasikan kembali visi & misi organisasi kepada seluruh karyawan; buat sesi diskusi kelompok untuk menyelaraskan persepsi.',
+                            'high' => 'Lakukan audit budaya kerja berkala dan pertahankan tradisi apresiasi nilai-nilai perusahaan agar tetap selaras dengan perkembangan pasar.'
+                        ],
+                        'Keterlibatan Pemimpin' => [
+                            'low' => 'Tingkatkan kehadiran fisik dan keterlibatan aktif pemimpin dalam aktivitas operasional harian guna mendampingi tim secara langsung.',
+                            'mid' => 'Adakan pertemuan mingguan rutin (one-on-one) dengan anggota tim utama untuk mendengar masukan serta tantangan kerja mereka.',
+                            'high' => 'Bagikan wewenang secara bertahap (delegasi) kepada tim kepercayaan untuk melatih jiwa kepemimpinan mandiri dalam organisasi.'
+                        ],
+                        'Sumber Daya Institusi' => [
+                            'low' => 'Prioritaskan pemenuhan kebutuhan sarana & prasarana kerja yang paling dasar agar karyawan dapat bekerja dengan aman dan produktif.',
+                            'mid' => 'Lakukan inventarisasi aset dan identifikasi bottleneck (kendala utama) pada sarana kerja yang menghambat efektivitas kerja.',
+                            'high' => 'Lakukan modernisasi peralatan kerja secara selektif untuk mendukung efisiensi operasional jangka panjang.'
+                        ],
+                        'Stabilitas Operasional' => [
+                            'low' => 'Segera catat dan petakan seluruh proses kerja harian; buat alur tanggung jawab yang jelas untuk menghindari tumpang tindih tugas.',
+                            'mid' => 'Susun Standard Operating Procedure (SOP) sederhana untuk proses kerja utama yang sering mengalami kendala atau keterlambatan.',
+                            'high' => 'Optimalkan proses operasional menggunakan perangkat digital/otomatisasi sederhana guna meminimalisir kesalahan manual (human error).'
+                        ],
+                        'Kualitas Tempat Kerja' => [
+                            'low' => 'Selesaikan konflik internal secara terbuka dan pastikan hak-hak dasar karyawan (upah tepat waktu, waktu istirahat) terpenuhi dengan adil.',
+                            'mid' => 'Perbaiki kenyamanan fisik lingkungan kerja (kebersihan, tata letak, pencahayaan) demi meningkatkan kepuasan kerja karyawan.',
+                            'high' => 'Kembangkan program kesejahteraan atau insentif berbasis performa untuk menjaga motivasi tim yang berprestasi tetap tinggi.'
+                        ],
+                        'Kinerja Ekonomi' => [
+                            'low' => 'Buat pencatatan keuangan harian (kas masuk/keluar) secara disiplin, pisahkan rekening pribadi dengan bisnis, dan kurangi pengeluaran non-esensial.',
+                            'mid' => 'Lakukan evaluasi struktur biaya operasional bulanan, tingkatkan margin keuntungan, dan pantau arus kas (cash flow) mingguan.',
+                            'high' => 'Lakukan diversifikasi produk/layanan atau lakukan ekspansi saluran pemasaran digital untuk menjangkau pangsa pasar yang lebih luas.'
+                        ]
+                    ];
+                @endphp
+
+                @foreach($data['sorted_factors'] as $factor)
+                    @php
+                        $score = $factor['score'];
+                        $level = $score >= 75 ? 'high' : ($score >= 50 ? 'mid' : 'low');
+                        $actionText = $actionMap[$factor['name']][$level] ?? 'Lakukan evaluasi berkala terhadap faktor ini untuk menjaga stabilitas organisasi.';
+                        
+                        // Style indicators
+                        $badgeColor = '#ef4444'; // Red
+                        $badgeBg = '#fee2e2';
+                        $statusText = 'Kritis (Perlu Perbaikan Segera)';
+                        if ($score >= 75) {
+                            $badgeColor = '#10b981'; // Green
+                            $badgeBg = '#d1fae5';
+                            $statusText = 'Sangat Baik (Pertahankan)';
+                        } elseif ($score >= 50) {
+                            $badgeColor = '#f59e0b'; // Amber
+                            $badgeBg = '#fef3c7';
+                            $statusText = 'Cukup (Perlu Peningkatan)';
+                        }
+                    @endphp
+                    
+                    <div style="display: flex; gap: 15px; padding-bottom: 20px; border-bottom: 1px dashed #e2e8f0; align-items: flex-start; margin-bottom: 15px;">
+                        <div style="background: {{ $badgeBg }}; color: {{ $badgeColor }}; font-weight: 800; font-size: 14px; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid {{ $badgeColor }}20;">
+                            {{ $loop->iteration }}
+                        </div>
+                        <div style="flex-grow: 1;">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px; flex-wrap: wrap;">
+                                <h5 style="font-size: 14px; font-weight: 700; color: #0f172a; margin: 0;">{{ $factor['name'] }}</h5>
+                                <span style="font-size: 10px; font-weight: 700; background: {{ $badgeBg }}; color: {{ $badgeColor }}; padding: 2px 8px; border-radius: 20px;">
+                                    Skor: {{ number_format($score, 1) }} - {{ $statusText }}
+                                </span>
+                            </div>
+                            <p style="font-size: 13px; color: #475569; line-height: 1.5; margin: 0; font-weight: 400;">
+                                <b>Rencana Tindakan:</b> {{ $actionText }}
+                            </p>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+
         <div style="height: 40px;"></div>
     </div>
 
