@@ -24,7 +24,7 @@
 *(Ganti gambar di bawah ini dengan screenshot asli aplikasi Anda setelah di-upload)*
 
 <p align="center">
-  <img src="public/assets/dashboard-mockup.png" width="800" alt="Dashboard SiSehat Mockup">
+  <img src="public/images/dashboard-mockup.png" width="800" alt="Dashboard SiSehat Mockup">
 </p>
 
 <p align="center">
